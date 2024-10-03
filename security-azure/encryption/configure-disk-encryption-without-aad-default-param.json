@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "value": "MyWindowsVM"
+    },
+    "numberOfInstances": {
+      "value": 1
+    },
+    "keyVaultName": {
+      "value": "keyvault10000"
+    },
+    "keyVaultResourceGroup": {
+      "value": "disk-encryption"
+    },
+    "keyEncryptionKeyURL": {
+      "value": "https://keyvault10000.vault.azure.net/keys/keyEncryptionKeyURL/801a95f8ef044b77ac115ce2bbc68b52"
+    },
+    "location": {
+      "value": "eastus"
+    },
+    "volumeType": {
+      "value": "ALL"
+    }
+  }
+}

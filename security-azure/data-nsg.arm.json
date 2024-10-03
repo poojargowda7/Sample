@@ -1,0 +1,109 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string"
+    },
+    "nsg": {
+      "defaultValue": {
+        "name": "WSDC16-VM",
+        "asgSource": "test2-ref-web-asg",
+        "asgTarget": "test2-ref-data-asg",
+        "portName": "MS-SQL",
+        "port": 1433
+      },
+      "type": "object"
+    },
+    "logging": {
+      "defaultValue": {
+        "name": "",
+        "resourceGroup": "profile-rg"
+      },
+      "type": "object"
+    },
+    "tags": {
+      "type": "object"
+    }
+  },
+  "variables": {
+    "workspace": "[resourceId(parameters('logging').resourceGroup, 'Microsoft.OperationalInsights/workspaces/', parameters('logging').name)]"
+  },
+  "resources": [
+    {
+      "comments": "Data NSG which allows the TCP connection over port 1433 within the Virtual network",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[parameters('nsg').name]",
+      "apiVersion": "2017-09-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "[parameters('nsg').portName]",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "[parameters('nsg').port]",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound",
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": [],
+              "sourceApplicationSecurityGroups": [
+                {
+                  "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationSecurityGroups', parameters('nsg').asgSource)]",
+                  "location": "[parameters('location')]",
+                  "tags": {},
+                  "properties": {}
+                }
+              ],
+              "destinationApplicationSecurityGroups": [
+                {
+                  "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationSecurityGroups', parameters('nsg').asgTarget)]",
+                  "location": "[parameters('location')]",
+                  "tags": {},
+                  "properties": {}
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "resources": [],
+      "dependsOn": [],
+      "tags": "[parameters('tags')]"
+    },
+    {
+      "condition": "[not(empty(parameters('logging').name))]",
+      "type": "Microsoft.Network/networkSecurityGroups/providers/diagnosticSettings",
+      "name": "[concat(parameters('nsg').name,'/Microsoft.Insights/lzlogging')]",
+      "apiVersion": "2017-05-01-preview",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('nsg').name)]"
+      ],
+      "properties": {
+        "workspaceId": "[if(not(empty(parameters('logging').name)), variables('workspace'), json('null'))]",
+        "logs": [
+          {
+            "category": "NetworkSecurityGroupEvent",
+            "enabled": true,
+            "retentionPolicy": {
+              "enabled": false,
+              "days": 0
+            }
+          },
+          {
+            "category": "NetworkSecurityGroupRuleCounter",
+            "enabled": true,
+            "retentionPolicy": {
+              "enabled": false,
+              "days": 0
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {}
+}

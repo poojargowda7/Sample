@@ -1,0 +1,114 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "nsg": {
+      "type": "object"
+    },
+    "logging": {
+      "defaultValue": {
+        "name": "",
+        "resourceGroup": "profile-rg"
+      },
+      "type": "object"
+    },
+    "tags": {
+      "type": "object"
+    }
+  },
+  "variables": {
+    "workspace": "[resourceId(parameters('logging').resourceGroup, 'Microsoft.OperationalInsights/workspaces/', parameters('logging').name)]",
+    "location": "[if(equals(parameters('location'), ''), resourceGroup().location, parameters('location'))]"
+  },
+  "resources": [
+    {
+      "comments": "CF Restrictive Public NSG Template allowing only HTTP and HTTPS traffic",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[parameters('nsg').name]",
+      "apiVersion": "2018-01-01",
+      "location": "[variables('location')]",
+      "scale": null,
+      "properties": {
+        "securityRules": [
+          {
+            "name": "HTTP",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "HTTPS",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          }
+        ]
+      },
+      "dependsOn": [],
+      "tags": "[parameters('tags')]"
+    },
+    {
+      "condition": "[not(empty(parameters('logging').name))]",
+      "type": "Microsoft.Network/networkSecurityGroups/providers/diagnosticSettings",
+      "name": "[concat(parameters('nsg').name,'/Microsoft.Insights/lzlogging')]",
+      "apiVersion": "2017-05-01-preview",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('nsg').name)]"
+      ],
+      "properties": {
+        "workspaceId": "[if(not(empty(parameters('logging').name)), variables('workspace'), json('null'))]",
+        "logs": [
+          {
+            "category": "NetworkSecurityGroupEvent",
+            "enabled": true,
+            "retentionPolicy": {
+              "enabled": false,
+              "days": 0
+            }
+          },
+          {
+            "category": "NetworkSecurityGroupRuleCounter",
+            "enabled": true,
+            "retentionPolicy": {
+              "enabled": false,
+              "days": 0
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "name": {
+      "type": "string",
+      "value": "[parameters('nsg').name]"
+    }
+  }
+}

@@ -1,0 +1,75 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmName": {
+            "type": "string"
+        },
+        "numberOfInstances": {
+            "type": "int",
+            "defaultValue": 1
+        },
+        "keyVaultName": {
+            "type": "string"
+        },
+        "keyEncryptionKeyURL": {
+            "type": "securestring",
+            "metadata": {
+                "description": "KeyVault key encryption key Url. Ex: https://diskencryptiontestaus.vault.azure.net/keys/DiskEncryptionKek/562a4bb76b524a1493a6afe8e536ee78"
+            }
+        },
+        "keyVaultResourceGroup": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "east us 2",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "volumeType": {
+            "type": "string",
+            "defaultValue": "All",
+            "metadata": {
+                "description": "Type of the volume OS or Data to perform encryption operation"
+            }
+        }
+    },
+    "variables": {
+        "extensionName": "AzureDiskEncryption",
+        "extensionVersion": "2.2",
+        "encryptionOperation": "EnableEncryption",
+        "keyEncryptionAlgorithm": "RSA-OAEP",
+        "keyVaultResourceID": "[resourceId(parameters('keyVaultResourceGroup'), 'Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[if(equals(parameters('numberOfInstances'), 1), concat(parameters('vmName'), '/', variables('extensionName')), concat(parameters('vmName'), copyindex(1), '/', variables('extensionName')))]",
+            "apiVersion": "2019-07-01",
+            "location": "[parameters('location')]",
+            "copy": {
+                "name": "diskEncryptionLoop",
+                "count": "[parameters('numberOfInstances')]"
+            },
+            "properties": {
+                "publisher": "Microsoft.Azure.Security",
+                "type": "AzureDiskEncryption",
+                "typeHandlerVersion": "[variables('extensionVersion')]",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "EncryptionOperation": "[variables('encryptionOperation')]",
+                    "KeyVaultURL": "[reference(variables('keyVaultResourceId'),'2016-10-01').vaultUri]",
+                    "KeyVaultResourceId": "[variables('keyVaultResourceID')]",
+                    "KeyEncryptionKeyURL": "[parameters('keyEncryptionKeyURL')]",
+                    "KekVaultResourceId": "[variables('keyVaultResourceID')]",
+                    "KeyEncryptionAlgorithm": "[variables('keyEncryptionAlgorithm')]",
+                    "VolumeType": "[parameters('volumeType')]"
+                },
+                "protectedSettings": {}
+            }
+        }
+    ],
+    "outputs": {}
+}

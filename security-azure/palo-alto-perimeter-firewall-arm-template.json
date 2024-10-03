@@ -1,0 +1,610 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "defaultValue": "[resourceGroup().location]",
+      "type": "string",
+      "metadata": {
+        "description": "Deployment location"
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "allowedValues": [
+        "DAN-EU-P-VNT002-DMZ",
+        "DAN-EU-P-VNT002"
+      ],
+      "metadata": {
+        "description": "VNet name"
+      },
+      "defaultValue": "DAN-EU-P-VNT002-DMZ"
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.29.199.192/26",
+      "metadata": {
+        "description": "Address prefix"
+      }
+    },
+    "managementSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.29.199.192/29",
+      "metadata": {
+        "description": "PaloAlto Management Subnet Prefix"
+      }
+    },
+    "managementSubnetName": {
+      "type": "string",
+      "defaultValue": "DAN-EU-P-SNT053-NVA_Mgmt",
+      "metadata": {
+        "description": "PaloAlto Management Subnet for eth0"
+      }
+    },
+    "untrustedSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.29.199.224/29",
+      "metadata": {
+        "description": "Palo Alto Untrusted Subnet Prefix"
+      }
+    },
+    "untrustedSubnetName": {
+      "type": "string",
+      "defaultValue": "DAN-EU-P-SNT050-Public_DMZ_In",
+      "metadata": {
+        "description": "Palo Alto Untrusted Subnet for eth1"
+      }
+    },
+    "trustedSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.29.199.232/29",
+      "metadata": {
+        "description": "Palo Alto Trusted Subnet"
+      }
+    },
+    "trustedSubnetName": {
+      "type": "string",
+      "defaultValue": "DAN-EU-P-SNT051-Public_DMZ_Out",
+      "metadata": {
+        "description": "Palo Alto Untrusted Subnet for eth2"
+      }
+    },
+    "untrustedLoadBalancerSku": {
+      "type": "string",
+      "allowedValues": [
+        "Standard",
+        "Basic"
+      ],
+      "metadata": {
+        "description": "LB Standard or Basic"
+      },
+      "defaultValue": "Standard"
+    },
+    "trustedLoadBalancerSku": {
+      "type": "string",
+      "allowedValues": [
+        "Standard",
+        "Basic"
+      ],
+      "metadata": {
+        "description": "LB Standard or Basic"
+      },
+      "defaultValue": "Standard"
+    },
+    "vmSize": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_D3",
+        "Standard_D4",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
+        "Standard_D14_v2",
+        "Standard_A4"
+      ],
+      "metadata": {
+        "description": "Azure VM size for PaloAlto VM-Series"
+      },
+      "defaultValue": "Standard_D3_v2"
+    },
+    "imageSku": {
+      "type": "string",
+      "allowedValues": [
+        "byol",
+        "bundle1",
+        "bundle2"
+      ],
+      "metadata": {
+        "description": "byol = Bring Your Own License; bundle1 = Bundle 1 PAYG (Hourly); bundle2 = Bundle 2 PAYG (Hourly)"
+      },
+      "defaultValue": "byol"
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username of the administrator account of VM-Series"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Password for the administrator account of VM-Series"
+      }
+    },
+    "dnsNameForPublicIP": {
+      "type": "string",
+      "defaultValue": "paloaltofirewallpublicip",
+      "metadata": {
+        "description": "Used for the Public IP of the Untrusted LB Front End and the Management IPs"
+      }
+    },
+    "validManagementSourceIPRange": {
+      "type": "string",
+      "defaultValue": "0.0.0.0/0",
+      "metadata": {
+        "description": "Valid source IP range for Management NSG"
+      }
+    }
+  },
+  "variables": {
+    "vmNamePrefix": "DAN-EU-P-NVA002-PA",
+    "fwlbPublicIPName": "DAN-EU-P-ELB001-PIP001",
+    "fwMgmtPublicIPSuffix": "fwMgmtPublicIP",
+    "publicIPAddressType": "Static",
+    "untrustedLbName": "DAN-EU-P-ELB001-DMZ",
+    "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('fwlbPublicIPName'))]",
+    "untrustedLbID": "[resourceId('Microsoft.Network/loadBalancers',variables('untrustedLbName'))]",
+    "frontEndIPConfigID": "[concat(variables('untrustedLbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
+    "untrustedlbPoolID": "[concat(variables('untrustedLbID'),'/backendAddressPools/Firewall-Layer')]",
+    "untrustedlbProbeID": "[concat(variables('untrustedLbID'),'/probes/tcpProbe')]",
+    "trustedLbName": "DAN-EU-P-ILB002-DMZ",
+    "trustedLbID": "[resourceId('Microsoft.Network/loadBalancers',variables('trustedLbName'))]",
+    "numberOfInstances": 2,
+    "managementNicNamePrefix": "eth0",
+    "managementSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('managementSubnetName'))]",
+    "untrustedNicNamePrefix": "eth1",
+    "untrustedSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('untrustedSubnetName'))]",
+    "trustedNicNamePrefix": "eth2",
+    "trustedSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('trustedSubnetName'))]",
+    "imagePublisher": "paloaltonetworks",
+    "imageOffer": "vmseries1",
+    "vmAvsetName": "PaloAltoAvailabilitySet",
+    "IPAddressPrefix": "[substring(parameters('vnetAddressPrefix'), 0, 4)]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('vnetName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('managementSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('managementSubnetPrefix')]"
+            }
+          },
+          {
+            "name": "[parameters('untrustedSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('untrustedSubnetPrefix')]"
+            }
+          },
+          {
+            "name": "[parameters('trustedSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('trustedSubnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "Availability Set for PAN VMSeries",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('vmAvsetName')]",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 20
+      },
+      "sku": {
+        "name": "Aligned"
+      }
+    },
+    {
+      "comments": "Public IP for Untrusted Azure Load Balancer FrontEnd",
+      "apiVersion": "2017-08-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('fwlbPublicIPName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('untrustedLoadBalancerSku')]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
+        }
+      }
+    },
+    {
+      "comments": "Public IPs for eth0 Management Interfaces",
+      "apiVersion": "2017-08-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[unisys.indexedNameWithSuffix(copyindex(), variables('vmNamePrefix'), variables('fwMgmtPublicIPSuffix'))]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('untrustedLoadBalancerSku')]"
+      },
+      "copy": {
+        "name": "e0PublicIPLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(parameters('dnsNameForPublicIP'), '-management-', copyindex(1))]"
+        }
+      }
+    },
+    {
+      "comments": "Management NICs",
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[unisys.indexedNameWithSuffix(copyindex(), variables('vmNamePrefix'), variables('managementNicNamePrefix'))]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "e0NicLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
+        "[concat('Microsoft.Network/publicIPAddresses/', unisys.indexedNameWithSuffix(copyindex(), variables('vmNamePrefix'), variables('fwMgmtPublicIPSuffix')))]"
+      ],
+      "properties": {
+        "enableIPForwarding": true,
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', unisys.indexedNameWithSuffix(copyindex(), variables('vmNamePrefix'), variables('fwMgmtPublicIPSuffix')))]"
+              },
+              "subnet": {
+                "id": "[variables('managementSubnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "Untrusted Azure Load Balancer",
+      "apiVersion": "2017-08-01",
+      "name": "[variables('untrustedLbName')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('fwlbPublicIPName'))]"
+      ],
+      "sku": {
+        "name": "[parameters('untrustedLoadBalancerSku')]"
+      },
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "LoadBalancerFrontEnd",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[variables('publicIPAddressID')]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "Firewall-Layer"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "lbrule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('frontEndIPConfigID')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('untrustedlbPoolID')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 80,
+              "backendPort": 80,
+              "enableFloatingIP": true,
+              "idleTimeoutInMinutes": 5,
+              "probe": {
+                "id": "[variables('untrustedlbProbeID')]"
+              }
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "tcpProbe",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 443,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "Untrusted NICs",
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[unisys.indexedNameWithSuffix(copyindex(), variables('vmNamePrefix'), variables('untrustedNicNamePrefix'))]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "e1NicLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
+        "[concat('Microsoft.Network/loadBalancers/', variables('untrustedLbName'))]"
+      ],
+      "properties": {
+        "enableIPForwarding": true,
+        "ipConfigurations": [
+          {
+            "name": "ipconfig",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('untrustedSubnetRef')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[concat(variables('untrustedLbID'), '/backendAddressPools/Firewall-Layer')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "Trusted Load Balancer",
+      "apiVersion": "2017-08-01",
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[variables('trustedLbName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]"
+      ],
+      "sku": {
+        "name": "[parameters('trustedLoadBalancerSku')]"
+      },
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "FrontendTrusted",
+            "properties": {
+              "subnet": {
+                "id": "[variables('trustedSubnetRef')]"
+              },
+              "privateIPAllocationMethod": "Dynamic"
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "Firewall-Layer-Private"
+          },
+          {
+            "name": "Firewall-Layer-VPN"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "lbruletrusted",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(variables('trustedLbID'), '/frontendIpConfigurations/FrontendTrusted')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(variables('trustedLbID'), '/backendAddressPools/Firewall-Layer-Private')]"
+              },
+              "probe": {
+                "id": "[concat(variables('trustedLbID'), '/probes/lbprobe')]"
+              },
+              "protocol": "[if(equals(parameters('trustedLoadBalancerSku'), 'Standard'), 'All', 'Tcp')]",
+              "frontendPort": "[if(equals(parameters('trustedLoadBalancerSku'), 'Standard'), 0, 80)]",
+              "backendPort": "[if(equals(parameters('trustedLoadBalancerSku'), 'Standard'), 0, 80)]",
+              "enableFloatingIP": true,
+              "idleTimeoutInMinutes": 4,
+              "loadDistribution": "SourceIPProtocol"
+            }
+          }
+        ],
+        "probes": [
+          {
+            "properties": {
+              "protocol": "Tcp",
+              "port": 443,
+              "intervalInSeconds": 15,
+              "numberOfProbes": 2
+            },
+            "name": "lbprobe"
+          }
+        ]
+      }
+    },
+    {
+      "comments": "Trusted NICs",
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[unisys.indexedNameWithSuffix(copyindex(), variables('vmNamePrefix'), variables('trustedNicNamePrefix'))]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "e2NicLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
+        "[concat('Microsoft.Network/loadBalancers/', variables('trustedLbName'))]"
+      ],
+      "properties": {
+        "enableIPForwarding": true,
+        "ipConfigurations": [
+          {
+            "name": "ipconfig",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('trustedSubnetRef')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[concat(variables('trustedLbID'), '/backendAddressPools/Firewall-Layer-Private')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "PaloAlto VM Series",
+      "type": "Microsoft.Compute/virtualMachines",
+      "copy": {
+        "name": "VMLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
+      "name": "[unisys.indexedName(copyindex(), variables('vmNamePrefix'))]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-03-30",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', unisys.indexedNameWithSuffix(copyindex(), variables('vmNamePrefix'), variables('untrustedNicNamePrefix')))]",
+        "[concat('Microsoft.Network/networkInterfaces/', unisys.indexedNameWithSuffix(copyindex(), variables('vmNamePrefix'), variables('managementNicNamePrefix')))]",
+        "[concat('Microsoft.Network/networkInterfaces/', unisys.indexedNameWithSuffix(copyindex(), variables('vmNamePrefix'), variables('trustedNicNamePrefix')))]",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('vmAvsetName'))]"
+      ],
+      "plan": {
+        "name": "[parameters('imageSku')]",
+        "product": "[variables('imageOffer')]",
+        "publisher": "[variables('imagePublisher')]"
+      },
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('vmAvsetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('vmNamePrefix'), copyindex(1))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('imageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[unisys.indexedNameWithSuffix(copyindex(), variables('vmNamePrefix'), 'osdisk')]",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            },
+            "caching": "ReadWrite"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', unisys.indexedNameWithSuffix(copyindex(), variables('vmNamePrefix'), variables('managementNicNamePrefix')))]",
+              "properties": {
+                "primary": true
+              }
+            },
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', unisys.indexedNameWithSuffix(copyindex(), variables('vmNamePrefix'), variables('untrustedNicNamePrefix')))]",
+              "properties": {
+                "primary": false
+              }
+            },
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', unisys.indexedNameWithSuffix(copyindex(), variables('vmNamePrefix'), variables('trustedNicNamePrefix')))]",
+              "properties": {
+                "primary": false
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "functions": [
+    {
+      "namespace": "unisys",
+      "members": {
+        "indexedName": {
+          "parameters": [
+            {
+              "name": "copyIndex",
+              "type": "int"
+            },
+            {
+              "name": "namePrefix",
+              "type": "string"
+            }
+          ],
+          "output": {
+            "type": "string",
+            "value": "[concat(parameters('namePrefix'), '-', substring('ABCDEFGHIJKLMNOPQRSTUVWXYZ', parameters('copyIndex'), 1))]"
+          }
+        }
+      }
+    },
+    {
+      "namespace": "unisys",
+      "members": {
+        "indexedNameWithSuffix": {
+          "parameters": [
+            {
+              "name": "copyIndex",
+              "type": "int"
+            },
+            {
+              "name": "namePrefix",
+              "type": "string"
+            },
+            {
+              "name": "nameSuffix",
+              "type": "string"
+            }
+          ],
+          "output": {
+            "type": "string",
+            "value": "[concat(parameters('namePrefix'), '-', substring('ABCDEFGHIJKLMNOPQRSTUVWXYZ', parameters('copyIndex'), 1), '-', parameters('nameSuffix'))]"
+          }
+        }
+      }
+    }
+  ]
+}

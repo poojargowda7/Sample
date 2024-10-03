@@ -1,0 +1,143 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "Vnet1Config": {
+            "defaultValue": {
+                "name": "vnetDev1",
+                "addressprefix": "10.0.0.0/16",
+                "resourceGroup": "profileRg",
+                "subscriptionID": ""
+            },
+            "type": "object"
+        },
+
+        "Vnet2Config": {
+            "defaultValue": {
+                "name": "vnetDev2",
+                "addressprefix": "10.1.0.0/16",
+                "resourceGroup": "profile1Rg",
+                "subscriptionID": ""
+            },
+            "type": "object"
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "East US 2"
+        }
+    },
+    "variables": {
+        "peering1to2Name": "[concat(parameters('Vnet1Config').name, '/peering-to-', parameters('Vnet2Config').name)]",
+        "peering2to1Name": "[concat(parameters('Vnet2Config').name, '/peering-to-', parameters('Vnet1Config').name)]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2020-06-01",
+            "name": "createPeering1to2",
+            "type": "Microsoft.Resources/deployments",
+            "location": "[parameters('location')]",
+            "subscriptionId": "[parameters('Vnet1Config').subscriptionID]",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/subscriptionDeploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                            "type": "Microsoft.Resources/deployments",
+                            "apiVersion": "2020-06-01",
+                            "name": "createNetworkPeeringfrom1",
+                            "location": "[parameters('location')]",
+                            "properties": {
+                                "mode": "Incremental",
+                                "template": {
+                                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                                    "contentVersion": "1.0.0.0",
+                                    "resources": [
+                                        {
+                                            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+                                            "apiVersion": "2020-05-01",
+                                            "name": "[variables('peering1to2Name')]",
+                                            "properties": {
+                                                "peeringState": "Connected",
+                                                "remoteVirtualNetwork": {
+                                                    "id": "[concat('/subscriptions/',parameters('Vnet2Config').subscriptionID,'/resourceGroups/',parameters('Vnet2Config').resourceGroup,'/providers/Microsoft.Network/virtualNetworks/', parameters('Vnet2Config').name)]"
+                                                },
+                                                "allowVirtualNetworkAccess": true,
+                                                "allowForwardedTraffic": true,
+                                                "allowGatewayTransit": false,
+                                                "useRemoteGateways": false,
+                                                "remoteAddressSpace": {
+                                                    "addressPrefixes": [
+                                                        "[parameters('Vnet2Config').addressprefix]"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "apiVersion": "2020-06-01",
+            "name": "createPeering2to1",
+            "type": "Microsoft.Resources/deployments",
+            "location": "[parameters('location')]",
+            "subscriptionId": "[parameters('Vnet2Config').subscriptionID]",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/subscriptionDeploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                            "type": "Microsoft.Resources/deployments",
+                            "apiVersion": "2020-06-01",
+                            "name": "createNetworkPeeringfrom2",
+                            "location": "[parameters('location')]",
+                            "properties": {
+                                "mode": "Incremental",
+                                "template": {
+                                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                                    "contentVersion": "1.0.0.0",
+                                    "resources": [
+                                        {
+                                            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+                                            "apiVersion": "2020-05-01",
+                                            "name": "[variables('peering2to1Name')]",
+                                            "properties": {
+                                                "peeringState": "Connected",
+                                                "remoteVirtualNetwork": {
+                                                    "id": "[concat('/subscriptions/',parameters('Vnet1Config').subscriptionID,'/resourceGroups/',parameters('Vnet1Config').resourceGroup,'/providers/Microsoft.Network/virtualNetworks/', parameters('Vnet1Config').name)]"
+                                                },
+                                                "allowVirtualNetworkAccess": true,
+                                                "allowForwardedTraffic": true,
+                                                "allowGatewayTransit": false,
+                                                "useRemoteGateways": false,
+                                                "remoteAddressSpace": {
+                                                    "addressPrefixes": [
+                                                        "[parameters('Vnet1Config').addressprefix]"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {     
+    }
+}

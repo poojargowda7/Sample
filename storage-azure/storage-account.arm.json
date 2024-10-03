@@ -1,0 +1,213 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storageSettings": {
+            "type": "object"
+        },
+        "storageType": {
+            "defaultValue": {
+                "kind": "StorageV2",
+                "performanceTier": "Standard",
+                "replication": "Standard_LRS",
+                "blobAccessTier": "Hot",
+                "allowBlobPublicAccess": false
+            },
+            "type": "object"
+        },
+        "storageBlobs": {
+            "defaultValue": {
+                "name": ""
+            },
+            "type": "object"
+        },
+        "storageFiles": {
+            "defaultValue": {
+                "name": "",
+                "access": "TransactionOptimized",
+                "quota": 5
+            },
+            "type": "object"
+        },
+        "lz_tags": {
+            "defaultValue": {},
+            "type": "object"
+        },
+        "vnetInfo": {
+            "defaultValue": {
+                "name": "defaultVnet",
+                "cidr": [ "192.168.0.0/22" ],
+                "resourceGroup": ""
+            },
+            "type": "object"
+        },
+        "subnetInfo": {
+            "defaultValue": {
+                "name": "Web",
+                "cidr": "192.168.1.0/24",
+                "nsg": ""
+            },
+            "type": "object"
+        },
+        "privateEndPointConfig": {
+            "defaultValue": {
+                "EndpointName": "default-pvt-endpoint",
+                "privateDnsZoneName": "default-dns-zone",
+                "pvtEndpointDnsGroupName": "default-dnz-group",
+                "groupID": [
+                    "blob",
+                    "files"
+                ]
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "containerName": "[if(empty(parameters('storageBlobs').name),'x',parameters('storageBlobs').name)]",
+        "shareName": "[if(empty(parameters('storageFiles').name),'x',parameters('storageFiles').name)]",
+        "virtualNetworkName": "[parameters('vnetInfo').name]",
+        "vnetRGId": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',parameters('vnetInfo').resourceGroup)]",
+        "vnetID": "[concat(variables('vnetRGId'),'/providers/Microsoft.Network/virtualNetworks/',variables('virtualNetworkName'))]",
+        "subnetId": "[concat(variables('vnetID'), '/subnets/',parameters('subnetInfo').name)]",
+        "pvtEndPointName": "[parameters('privateEndPointConfig').EndpointName]",
+        "dnsZoneName": "[parameters('privateEndPointConfig').privateDnsZoneName]",
+        "DNSGroupName": "[parameters('privateEndPointConfig').pvtEndpointDnsGroupName]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-04-01",
+            "name": "[parameters('storageSettings').name]",
+            "location": "[parameters('storageSettings').location]",
+            "tags": "[parameters('lz_tags')]",
+            "sku": {
+                "name": "[parameters('storageType').replication]",
+                "tier": "[parameters('storageType').performanceTier]"
+            },
+            "kind": "[parameters('storageType').kind]",
+            "dependsOn": [],
+            "properties": {
+                "networkAcls": {
+                    "resourceAccessRules": [
+                        {
+                            "resourceId": "[variables('vnetID')]",
+                            "tenantId": "[subscription().tenantId]"
+                        }
+                    ],
+                    "bypass": "AzureServices",
+                    "virtualNetworkRules": [
+                        {
+                            "id": "[variables('subnetId')]",
+                            "action": "Allow"
+                        }
+                    ],
+                    "ipRules": [],
+                    "defaultAction": "Deny"
+                },
+                "publicNetworkAccess": "Enabled",
+                "supportsHttpsTrafficOnly": true,
+                "encryption": {
+                    "services": {
+                        "file": {
+                            "enabled": true
+                        },
+                        "blob": {
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                },
+                "accessTier": "[parameters('storageType').blobAccessTier]",
+                "allowBlobPublicAccess": "[parameters('storageType').allowBlobPublicAccess]"
+            }
+        },
+        {
+            "condition": "[not(empty(parameters('storageBlobs').name))]",
+            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+            "apiVersion": "2019-06-01",
+            "name": "[concat(parameters('storageSettings').name, '/default/', variables('containerName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageSettings').name)]"
+            ]
+        },
+        {
+            "condition": "[not(empty(parameters('storageFiles').name))]",
+            "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+            "apiVersion": "2019-06-01",
+            "name": "[concat(parameters('storageSettings').name, '/default/', variables('shareName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageSettings').name)]"
+            ],
+            "properties": {
+                "accessTier": "[parameters('storageFiles').access]",
+                "shareQuota": "[parameters('storageFiles').quota]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints",
+            "apiVersion": "2020-05-01",
+            "name": "[variables('pvtEndPointName')]",
+            "location": "[parameters('storageSettings').location]",
+            "properties": {
+                "subnet": {
+                    "id": "[variables('subnetId')]"
+                },
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[variables('pvtEndPointName')]",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageSettings').name)]",
+                            "groupIds": "[parameters('privateEndPointConfig').groupID]"
+                        }
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageSettings').name)]"
+            ]
+        },
+
+        {
+            "type": "Microsoft.Network/privateDnsZones",
+            "apiVersion": "2020-06-01",
+            "name": "[variables('dnsZoneName')]",
+            "location": "global",
+            "properties": {},
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+            "apiVersion": "2020-06-01",
+            "name": "[format('{0}/{1}', variables('dnsZoneName'), format('{0}-link', variables('dnsZoneName')))]",
+            "location": "global",
+            "properties": {
+                "registrationEnabled": false,
+                "virtualNetwork": {
+                    "id": "[variables('vnetID')]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('dnsZoneName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+            "apiVersion": "2021-05-01",
+            "name": "[concat(variables('pvtEndPointName'),'/', variables('DNSGroupName'))]",
+            "properties": {
+                "privateDnsZoneConfigs": [
+                    {
+                        "name": "config1",
+                        "properties": {
+                            "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('dnsZoneName'))]"
+                        }
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('dnsZoneName'))]",
+                "[resourceId('Microsoft.Network/privateEndpoints', variables('pvtEndPointName'))]"
+            ]
+        }
+    ]
+}

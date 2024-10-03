@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "value": "[profile.service.settingObject.diskEncryption.vmName]"
+    },
+    "numberOfInstances": {
+      "value": "[profile.service.settingObject.diskEncryption.numberOfInstances]"
+    },
+    "keyVaultName": {
+      "value": "[profile.service.settingObject.diskEncryption.keyVaultName]"
+    },
+    "keyVaultResourceGroup": {
+      "value": "[profile.service.settingObject.diskEncryption.keyVaultResourceGroup]"
+    },
+    "keyEncryptionKeyURL": {
+      "value": "[profile.service.settingObject.diskEncryption.keyEncryptionKeyURL]"
+    },
+    "location": {
+      "value": "[profile.service.settingObject.diskEncryption.location]"
+    },
+    "volumeType": {
+      "value": "[profile.service.settingObject.diskEncryption.volumeType]"
+    }
+  }
+}

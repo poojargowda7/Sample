@@ -1,0 +1,316 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string"
+    },
+    "nsg": {
+      "defaultValue": {
+        "name": "WSDC16-VM"
+      },
+      "type": "object"
+    },
+    "rule1": {
+      "defaultValue": {
+        "asgSource": "profile-web-asg",
+        "asgTarget": "profile-app-asg",
+        "direction": "Inbound",
+        "access": "Allow",
+        "priority": 100,
+        "portName": "",
+        "port": 80
+      },
+      "type": "object"
+    },
+    "rule2": {
+      "defaultValue": {
+        "asgSource": "profile-web-asg",
+        "asgTarget": "profile-app-asg",
+        "direction": "Inbound",
+        "access": "Allow",
+        "priority": 110,
+        "portName": "",
+        "port": 443
+      },
+      "type": "object"
+    },
+    "rule3": {
+      "defaultValue": {
+        "asgSource": "profile-app-asg",
+        "asgTarget": "profile-data-asg",
+        "direction": "Inbound",
+        "access": "Allow",
+        "priority": 120,
+        "portName": "",
+        "port": 1433
+      },
+      "type": "object"
+    },
+    "rule4": {
+      "defaultValue": {
+        "asgSource": "profile-app-asg",
+        "asgTarget": "profile-data-asg",
+        "direction": "Inbound",
+        "access": "Allow",
+        "priority": 160,
+        "portName": "",
+        "port": 1521
+      },
+      "type": "object"
+    },
+    "rule5": {
+      "defaultValue": {
+        "asgSource": "profile-app-asg",
+        "asgTarget": "profile-data-asg",
+        "direction": "Inbound",
+        "access": "Allow",
+        "priority": 140,
+        "portName": "Allow_GWM",
+        "port": 1520
+      },
+      "type": "object"
+    },
+    "logging": {
+      "defaultValue": {
+        "name": "",
+        "resourceGroup": "profile-rg"
+      },
+      "type": "object"
+    },
+    "tags": {
+      "type": "object"
+    }
+  },
+  "variables": {
+    "workspace": "[resourceId(parameters('logging').resourceGroup, 'Microsoft.OperationalInsights/workspaces/', parameters('logging').name)]",
+    "rule1": [
+      {
+        "name": "[parameters('rule1').portName]",
+        "protocol": "*",
+        "sourcePortRange": "*",
+        "destinationPortRange": "[parameters('rule1').port]",
+        "access": "[parameters('rule1').access]",
+        "priority": "[parameters('rule1').priority]",
+        "direction": "[parameters('rule1').direction]",
+        "sourcePortRanges": [],
+        "destinationPortRanges": [],
+        "sourceAddressPrefixes": [],
+        "destinationAddressPrefixes": [],
+        "sourceApplicationSecurityGroups": [
+          {
+            "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationSecurityGroups', parameters('rule1').asgSource)]",
+            "location": "[parameters('location')]",
+            "tags": {},
+            "properties": {}
+          }
+        ],
+        "destinationApplicationSecurityGroups": [
+          {
+            "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationSecurityGroups', parameters('rule1').asgTarget)]",
+            "location": "[parameters('location')]",
+            "tags": {},
+            "properties": {}
+          }
+        ]
+      }
+    ],
+    "rule2": [
+      {
+        "name": "[parameters('rule2').portName]",
+        "protocol": "*",
+        "sourcePortRange": "*",
+        "destinationPortRange": "[parameters('rule2').port]",
+        "access": "[parameters('rule2').access]",
+        "priority": "[parameters('rule2').priority]",
+        "direction": "[parameters('rule2').direction]",
+        "sourcePortRanges": [],
+        "destinationPortRanges": [],
+        "sourceAddressPrefixes": [],
+        "destinationAddressPrefixes": [],
+        "sourceApplicationSecurityGroups": [
+          {
+            "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationSecurityGroups', parameters('rule2').asgSource)]",
+            "location": "[parameters('location')]",
+            "tags": {},
+            "properties": {}
+          }
+        ],
+        "destinationApplicationSecurityGroups": [
+          {
+            "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationSecurityGroups', parameters('rule2').asgTarget)]",
+            "location": "[parameters('location')]",
+            "tags": {},
+            "properties": {}
+          }
+        ]
+      }
+    ],
+    "rule3": [
+      {
+        "name": "[parameters('rule3').portName]",
+        "protocol": "*",
+        "sourcePortRange": "*",
+        "destinationPortRange": "[parameters('rule3').port]",
+        "access": "[parameters('rule3').access]",
+        "priority": "[parameters('rule3').priority]",
+        "direction": "[parameters('rule3').direction]",
+        "sourcePortRanges": [],
+        "destinationPortRanges": [],
+        "sourceAddressPrefixes": [],
+        "destinationAddressPrefixes": [],
+        "sourceApplicationSecurityGroups": [
+          {
+            "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationSecurityGroups', parameters('rule1').asgSource)]",
+            "location": "[parameters('location')]",
+            "tags": {},
+            "properties": {}
+          }
+        ],
+        "destinationApplicationSecurityGroups": [
+          {
+            "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationSecurityGroups', parameters('rule1').asgTarget)]",
+            "location": "[parameters('location')]",
+            "tags": {},
+            "properties": {}
+          }
+        ]
+      }
+    ],
+    "rule4": [
+      {
+        "name": "[parameters('rule4').portName]",
+        "protocol": "*",
+        "sourcePortRange": "*",
+        "destinationPortRange": "[parameters('rule4').port]",
+        "access": "[parameters('rule4').access]",
+        "priority": "[parameters('rule4').priority]",
+        "direction": "[parameters('rule4').direction]",
+        "sourcePortRanges": [],
+        "destinationPortRanges": [],
+        "sourceAddressPrefixes": [],
+        "destinationAddressPrefixes": [],
+        "sourceApplicationSecurityGroups": [
+          {
+            "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationSecurityGroups', parameters('rule1').asgSource)]",
+            "location": "[parameters('location')]",
+            "tags": {},
+            "properties": {}
+          }
+        ],
+        "destinationApplicationSecurityGroups": [
+          {
+            "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationSecurityGroups', parameters('rule1').asgTarget)]",
+            "location": "[parameters('location')]",
+            "tags": {},
+            "properties": {}
+          }
+        ]
+      }
+    ],
+    "rule5": [
+      {
+        "name": "[parameters('rule5').portName]",
+        "protocol": "*",
+        "sourcePortRange": "*",
+        "destinationPortRange": "[parameters('rule5').port]",
+        "access": "[parameters('rule5').access]",
+        "priority": "[parameters('rule5').priority]",
+        "direction": "[parameters('rule5').direction]",
+        "sourcePortRanges": [],
+        "destinationPortRanges": [],
+        "sourceAddressPrefixes": [],
+        "destinationAddressPrefixes": [],
+          "sourceApplicationSecurityGroups": [
+          {
+            "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationSecurityGroups', parameters('rule5').asgSource)]",
+            "location": "[parameters('location')]",
+            "tags": {},
+            "properties": {}
+          }
+        ],
+        "destinationApplicationSecurityGroups": [
+          {
+            "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationSecurityGroups', parameters('rule5').asgTarget)]",
+            "location": "[parameters('location')]",
+            "tags": {},
+            "properties": {}
+          }
+        ]
+      }
+    ],
+    "rules1": "[if(not(empty(parameters('rule1').portName)), variables('rule1'), variables('emptyArray'))]",
+    "rules2": "[if(not(empty(parameters('rule2').portName)), variables('rule2'), variables('emptyArray'))]",
+    "rules3": "[if(not(empty(parameters('rule3').portName)), variables('rule3'), variables('emptyArray'))]",
+    "rules4": "[if(not(empty(parameters('rule4').portName)), variables('rule4'), variables('emptyArray'))]",
+    "rules5": "[if(not(empty(parameters('rule5').portName)), variables('rule5'), variables('emptyArray'))]",
+    "rules1234": "[union(variables('rules1'), union(variables('rules2'), union(variables('rules3'),union( variables('rules4'),variables('rules5')))))]",
+    "emptyArray": []
+  },
+  "resources": [
+    {
+      "comments": "Placholder NSG within the Virtual network",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[parameters('nsg').name]",
+      "apiVersion": "2017-09-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "copy": [
+          {
+            "name": "securityRules",
+            "count": "[length(variables('rules1234'))]",
+            "input": {
+              "name": "[variables('rules1234')[copyIndex('securityRules')].name]",
+              "properties": {
+                "protocol": "[variables('rules1234')[copyIndex('securityRules')].protocol]",
+                "sourcePortRange": "[variables('rules1234')[copyIndex('securityRules')].sourcePortRange]",
+                "destinationPortRange": "[variables('rules1234')[copyIndex('securityRules')].destinationPortRange]",
+                "sourceAddressPrefixes": "[variables('rules1234')[copyIndex('securityRules')].sourceAddressPrefixes]",
+                "destinationAddressPrefixes": "[variables('rules1234')[copyIndex('securityRules')].destinationAddressPrefixes]",
+                "access": "[variables('rules1234')[copyIndex('securityRules')].access]",
+                "priority": "[variables('rules1234')[copyIndex('securityRules')].priority]",
+                "direction": "[variables('rules1234')[copyIndex('securityRules')].direction]",
+                "sourceApplicationSecurityGroups": "[variables('rules1234')[copyIndex('securityRules')].sourceApplicationSecurityGroups]",
+                "destinationApplicationSecurityGroups": "[variables('rules1234')[copyIndex('securityRules')].destinationApplicationSecurityGroups]"
+              }
+            }
+          }
+        ]
+      },
+      "dependsOn": [],
+      "tags": "[parameters('tags')]"
+    },
+    {
+      "condition": "[not(empty(parameters('logging').name))]",
+      "type": "Microsoft.Network/networkSecurityGroups/providers/diagnosticSettings",
+      "name": "[concat(parameters('nsg').name,'/Microsoft.Insights/lzlogging')]",
+      "apiVersion": "2017-05-01-preview",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('nsg').name)]"
+      ],
+      "properties": {
+        "workspaceId": "[if(not(empty(parameters('logging').name)), variables('workspace'), json('null'))]",
+        "logs": [
+          {
+            "category": "NetworkSecurityGroupEvent",
+            "enabled": true,
+            "retentionPolicy": {
+              "enabled": false,
+              "days": 0
+            }
+          },
+          {
+            "category": "NetworkSecurityGroupRuleCounter",
+            "enabled": true,
+            "retentionPolicy": {
+              "enabled": false,
+              "days": 0
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {}
+}

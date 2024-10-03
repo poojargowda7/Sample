@@ -1,0 +1,30 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "[profile.property.region]"
+        },
+        "vnetInfo": {
+            "value": "[profile.network.settingObject.vnet]"
+        },
+        "subnet1": {
+            "value": "{profile.network.settingObject.subnet1}"
+        },
+        "subnet2": {
+            "value": "{profile.network.settingObject.subnet2}"
+        },
+        "subnet3": {
+            "value": "{profile.network.settingObject.subnet3}"
+        },
+        "subnet4": {
+            "value": "{profile.network.settingObject.subnet4}"
+        },
+        "logging": {
+            "value": "[profile.network.settingObject.loggingWorkspace]"
+        },
+        "tags": {
+            "value": "[profile.tags]"
+        }
+    }
+}

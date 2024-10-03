@@ -1,0 +1,99 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "defaultValue": "usgovvirginia",
+            "type": "string"
+        },
+        "name": {
+            "defaultValue": "Default-VNet",
+            "type": "string"
+        },
+        "cidr": {
+            "defaultValue": "192.168.0.0/22",
+            "type": "string"
+        },
+        "public-subnet-name": {
+            "defaultValue": "Public",
+            "type": "string"
+        },
+        "public-subnet-cidr": {
+            "defaultValue": "192.168.1.0/24",
+            "type": "string"
+        },
+        "public-subnet-nsg": {
+            "defaultValue": "",
+            "type": "string"
+        },
+        "data-subnet-name": {
+            "defaultValue": "Data",
+            "type": "string"
+        },
+        "data-subnet-cidr": {
+            "defaultValue": "192.168.3.0/24",
+            "type": "string"
+        },
+        "data-subnet-nsg": {
+            "defaultValue": "",
+            "type": "string"
+        }
+    },
+    "variables": {
+        "public-nsg-obj-def": {
+            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('public-subnet-nsg'))]"
+        },
+        "data-nsg-obj-def": {
+            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('data-subnet-nsg'))]"
+        }
+    },
+    "resources": [
+        {
+            "comments": "CF for Azure Default VNet Template",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('name')]",
+            "apiVersion": "2018-01-01",
+            "location": "[parameters('location')]",
+            "scale": null,
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('cidr')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('data-subnet-name')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('data-subnet-cidr')]",
+                            "networkSecurityGroup": "[if(equals(parameters('data-subnet-nsg'), ''), json('null'), variables('data-nsg-obj-def'))]",
+                            "serviceEndpoints": []
+                        }
+                    },
+                    {
+                        "name": "[parameters('public-subnet-name')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('public-subnet-cidr')]",
+                            "networkSecurityGroup": "[if(equals(parameters('public-subnet-nsg'), ''), json('null'), variables('public-nsg-obj-def'))]",
+                            "serviceEndpoints": []
+                        }
+                    }
+                ],
+                "virtualNetworkPeerings": [],
+                "enableDdosProtection": false,
+                "enableVmProtection": false
+            },
+            "dependsOn": []
+        }
+    ],
+    "outputs": {
+        "public-subnet-cidr": {
+            "type": "string",
+            "value": "[parameters('public-subnet-cidr')]"
+        },
+        "data-subnet-cidr": {
+            "type": "string",
+            "value": "[parameters('data-subnet-cidr')]"
+        }
+    }
+}

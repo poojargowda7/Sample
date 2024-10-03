@@ -1,0 +1,73 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string"
+    },
+    "nsg": {
+      "type": "object"
+    },
+    "logging": {
+      "defaultValue": {
+        "name": "",
+        "resourceGroup": "profile-rg"
+      },
+      "type": "object"
+    },
+    "tags": {
+      "type": "object"
+    }
+  },
+  "variables": {
+    "workspace": "[resourceId(parameters('logging').resourceGroup, 'Microsoft.OperationalInsights/workspaces/', parameters('logging').name)]"
+  },
+  "resources": [
+    {
+      "comments": "Placholder NSG within the Virtual network",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[parameters('nsg').name]",
+      "apiVersion": "2017-06-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+        ]
+      },
+      "resources": [],
+      "dependsOn": [],
+      "tags": "[parameters('tags')]"
+    },
+    {
+      "condition": "[not(empty(parameters('logging').name))]",
+      "type": "Microsoft.Network/networkSecurityGroups/providers/diagnosticSettings",
+      "name": "[concat(parameters('nsg').name,'/Microsoft.Insights/lzlogging')]",
+      "apiVersion": "2017-05-01-preview",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('nsg').name)]"
+      ],
+      "properties": {
+        "workspaceId": "[if(not(empty(parameters('logging').name)), variables('workspace'), json('null'))]",
+        "logs": [
+          {
+            "category": "NetworkSecurityGroupEvent",
+            "enabled": true,
+            "retentionPolicy": {
+              "enabled": false,
+              "days": 0
+            }
+          },
+          {
+            "category": "NetworkSecurityGroupRuleCounter",
+            "enabled": true,
+            "retentionPolicy": {
+              "enabled": false,
+              "days": 0
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {}
+}

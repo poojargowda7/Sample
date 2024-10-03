@@ -1,0 +1,33 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "[profile.property.region]"
+        },
+        "gatewayName": {
+            "value": "[profile.network.settingObject.gatewayInfo]"
+        },
+        "subnetInfo": {
+            "value": "[profile.network.settingObject.subnetInfo]"
+        },
+        "virtualNetwork": {
+            "value": "[profile.network.settingObject.virtualNetworkInfo]"
+        },
+        "skuName": {
+            "value": "[profile.network.settingObject.sku]"
+        },
+        "publicIp": {
+            "value": "[profile.network.settingObject.publicIp]"
+        },
+        "capacity": {
+            "value": "[profile.network.settingObject.capacity]"
+        },
+        "pathMatch1": {
+            "value": "[profile.network.settingObject.pathMatchName]"
+        },
+        "wafInfo": {
+            "value": "[profile.network.settingObject.wafOptions]"
+        }
+    }
+}

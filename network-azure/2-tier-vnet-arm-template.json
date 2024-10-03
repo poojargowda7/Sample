@@ -1,0 +1,99 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "defaultValue": "eastus",
+            "type": "string"
+        },
+        "name": {
+            "defaultValue": "aks-vnet",
+            "type": "string"
+        },
+        "cidr": {
+            "defaultValue": [ "10.100.0.0/24", "10.200.0.0/24" ],
+            "type": "array"
+        },
+        "master-subnet-name": {
+            "defaultValue": "master",
+            "type": "string"
+        },
+        "master-subnet-cidr": {
+            "defaultValue": "10.100.0.0/24",
+            "type": "string"
+        },
+        "master-subnet-nsg": {
+            "defaultValue": "",
+            "type": "string"
+        },
+        "agent-subnet-name": {
+            "defaultValue": "agent",
+            "type": "string"
+        },
+        "agent-subnet-cidr": {
+            "defaultValue": "10.200.0.0/24",
+            "type": "string"
+        },
+        "agent-subnet-nsg": {
+            "defaultValue": "",
+            "type": "string"
+        }
+    },
+    "variables": {
+        "master-nsg-obj-def": {
+            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('master-subnet-nsg'))]"
+        },
+        "agent-nsg-obj-def": {
+            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('agent-subnet-nsg'))]"
+        }
+    },
+    "resources": [
+        {
+            "comments": "CF for Azure Default VNet Template",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('name')]",
+            "apiVersion": "2018-01-01",
+            "location": "[parameters('location')]",
+            "scale": null,
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('cidr')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('agent-subnet-name')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('agent-subnet-cidr')]",
+                            "networkSecurityGroup": "[if(equals(parameters('agent-subnet-nsg'), ''), json('null'), variables('agent-nsg-obj-def'))]",
+                            "serviceEndpoints": []
+                        }
+                    },
+                    {
+                        "name": "[parameters('master-subnet-name')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('master-subnet-cidr')]",
+                            "networkSecurityGroup": "[if(equals(parameters('master-subnet-nsg'), ''), json('null'), variables('master-nsg-obj-def'))]",
+                            "serviceEndpoints": []
+                        }
+                    }
+                ],
+                "virtualNetworkPeerings": [],
+                "enableDdosProtection": false,
+                "enableVmProtection": false
+            },
+            "dependsOn": []
+        }
+    ],
+    "outputs": {
+        "master-subnet-cidr": {
+            "type": "string",
+            "value": "[parameters('master-subnet-cidr')]"
+        },
+        "agent-subnet-cidr": {
+            "type": "string",
+            "value": "[parameters('agent-subnet-cidr')]"
+        }
+    }
+}

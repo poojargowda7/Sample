@@ -1,0 +1,44 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "defaultValue": "eastus",
+            "type": "string"
+        },
+        "storageAccountName": {
+            "defaultValue": "cfasystemstorage",
+            "type": "string"
+        },
+        "accountType": {
+            "defaultValue": "Standard_LRS",
+            "type": "string"
+        },
+        "kind": {
+            "defaultValue": "Storage",
+            "type": "string"
+        },
+        "supportsHttpsTrafficOnly": {
+            "defaultValue": true,
+            "type": "bool"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "name": "[parameters('storageAccountName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2018-07-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "supportsHttpsTrafficOnly": "[parameters('supportsHttpsTrafficOnly')]"
+            },
+            "dependsOn": [],
+            "sku": {
+                "name": "[parameters('accountType')]"
+            },
+            "kind": "[parameters('kind')]"
+        }
+    ],
+    "outputs": {}
+}

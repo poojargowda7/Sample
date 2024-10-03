@@ -1,0 +1,42 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "nsgList": {
+      "type": "array"
+    },
+    "logging": {
+      "defaultValue": {
+        "name": "",
+        "resourceGroup": "profile-rg"
+      },
+      "type": "object"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2017-05-10",
+      "name": "nsg-logging",
+      "dependsOn": [],
+      "properties": {
+        "mode": "incremental",
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "parameters": {
+          "nsgList": {
+            "value": "[parameters('nsgList')]"
+          },
+          "logging": {
+            "value": "[parameters('logging')]"
+          }
+        },
+        "templateLink": {
+          "uri": "file://templates/security/nsg-logging.arm.json",
+          "contentVersion": "1.0.0.0"
+        }
+      }
+    }
+  ]
+}

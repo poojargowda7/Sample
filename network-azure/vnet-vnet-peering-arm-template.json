@@ -1,0 +1,87 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "localVirtualNetworkName": {
+            "type": "string",
+            "metadata": {
+                "description": "Set the VNet1 name"
+            }
+        },
+        "remoteVirtualNetworkName": {
+            "type": "string",
+            "metadata": {
+                "description": "Set the VNet2 name"
+            }
+        },
+        "remoteVirtualNetworkResourceGroupName": {
+            "type": "string",
+            "metadata": {
+                "description": "Sets the VNet2 Resource group"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        }
+    },
+    "variables": {
+        "virtualNetwork1ResourceId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('localVirtualNetworkName'))]",
+        "virtualNetwork2ResourceId": "[resourceId(parameters('remoteVirtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks', parameters('remoteVirtualNetworkName'))]",
+        "peering1to2Name": "[concat(parameters('localVirtualNetworkName'), '/peering-to-', parameters('remoteVirtualNetworkName'))]",
+        "peering2to1Name": "[concat(parameters('remoteVirtualNetworkName'), '/peering-to-', parameters('localVirtualNetworkName'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2016-06-01",
+            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+            "name": "[variables('peering1to2Name')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "allowVirtualNetworkAccess": true,
+                "allowForwardedTraffic": false,
+                "allowGatewayTransit": false,
+                "useRemoteGateways": false,
+                "remoteVirtualNetwork": {
+                    "id": "[variables('virtualNetwork2ResourceId')]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2017-05-10",
+            "name": "nestedTemplate",
+            "type": "Microsoft.Resources/deployments",
+            "resourceGroup": "[parameters('remoteVirtualNetworkResourceGroupName')]",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                            "apiVersion": "2016-06-01",
+                            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+                            "name": "[variables('peering2to1Name')]",
+                            "location": "[parameters('location')]",
+                            "properties": {
+                                "allowVirtualNetworkAccess": true,
+                                "allowForwardedTraffic": false,
+                                "allowGatewayTransit": false,
+                                "useRemoteGateways": false,
+                                "remoteVirtualNetwork": {
+                                    "id": "[variables('virtualNetwork1ResourceId')]"
+                                }
+                            }
+                        }
+                    ]
+                },
+                "parameters": {}
+            }
+        }
+    ]
+}

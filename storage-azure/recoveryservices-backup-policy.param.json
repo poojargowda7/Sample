@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "[profile.property.region]"
+    },
+    "vaultInfo": {
+      "value": "[profile.service.settingObject.vaultSetting]"
+    },
+    "scheduleInfo": {
+      "value": "[profile.service.settingObject.scheduleInfo]"
+    },
+    "retentionDurationCount": {
+      "value": "[profile.service.settingObject.retentionDurationCount]"
+    },
+    "retentionSelection": {
+      "value": "[profile.service.settingObject.retentionSelection]"
+    }
+  }
+}

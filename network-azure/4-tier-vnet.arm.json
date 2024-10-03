@@ -1,0 +1,215 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "defaultValue": "usgovvirginia",
+            "type": "string"
+        },
+        "vnetInfo": {
+            "defaultValue": {
+                "name": "defaultVnet",
+                "cidr": [ "192.168.0.0/22" ]
+            },
+            "type": "object"
+        },
+        "subnet1": {
+            "defaultValue": {
+                "name": "Web",
+                "cidr": "192.168.1.0/24",
+                "nsg": ""
+            },
+            "type": "object"
+        },
+        "subnet2": {
+            "defaultValue": {
+                "name": "Application",
+                "cidr": "192.168.2.0/24",
+                "nsg": ""
+            },
+            "type": "object"
+        },
+        "subnet3": {
+            "defaultValue": {
+                "name": "Data",
+                "cidr": "192.168.3.0/24",
+                "nsg": ""
+            },
+            "type": "object"
+        },
+        "subnet4": {
+            "defaultValue": {
+                "name": "Data",
+                "cidr": "192.168.4.0/24",
+                "nsg": ""
+            },
+            "type": "object"
+        },
+        "logging": {
+            "defaultValue": {
+                "name": "",
+                "resourceGroup": "profile-rg"
+            },
+            "type": "object"
+        },
+        "tags": {
+            "type": "object"
+        }
+    },
+    "variables": {
+        "nsg1-obj-def": {
+            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('subnet1').nsgName)]"
+        },
+        "nsg2-obj-def": {
+            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('subnet2').nsgName)]"
+        },
+        "nsg3-obj-def": {
+            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('subnet3').nsgName)]"
+        },
+        "nsg4-obj-def": {
+            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('subnet4').nsgName)]"
+        },
+        "workspace": "[resourceId(parameters('logging').resourceGroup, 'Microsoft.OperationalInsights/workspaces/', parameters('logging').name)]"
+    },
+    "resources": [
+        {
+            "comments": "CF for Azure Default VNet Template",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('vnetInfo').name]",
+            "apiVersion": "2018-01-01",
+            "location": "[parameters('location')]",
+            "scale": null,
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": "[parameters('vnetInfo').cidr]"
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('subnet1').name]",
+                        "properties": {
+                            "addressPrefix": "[parameters('subnet1').cidr]",
+                            "networkSecurityGroup": "[if(equals(parameters('subnet1').nsgName, ''), json('null'), variables('nsg1-obj-def'))]",
+                            "serviceEndpoints": [
+                                {
+                                    "service": "Microsoft.Storage",
+                                    "locations": "[parameters('location')]"
+                                },
+                                {
+                                    "service": "Microsoft.KeyVault",
+                                    "locations":"[parameters('location')]"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "[parameters('subnet2').name]",
+                        "properties": {
+                            "addressPrefix": "[parameters('subnet2').cidr]",
+                            "networkSecurityGroup": "[if(equals(parameters('subnet2').nsgName, ''), json('null'), variables('nsg2-obj-def'))]",
+                            "serviceEndpoints": [
+                                {
+                                    "service": "Microsoft.Storage",
+                                    "locations": "[parameters('location')]"
+                                },
+                                {
+                                    "service": "Microsoft.KeyVault",
+                                    "locations":"[parameters('location')]"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "[parameters('subnet3').name]",
+                        "properties": {
+                            "addressPrefix": "[parameters('subnet3').cidr]",
+                            "networkSecurityGroup": "[if(equals(parameters('subnet3').nsgName, ''), json('null'), variables('nsg3-obj-def'))]",
+                            "serviceEndpoints": [
+                                {
+                                    "service": "Microsoft.Storage",
+                                    "locations": "[parameters('location')]"
+                                },
+                                {
+                                    "service": "Microsoft.KeyVault",
+                                    "locations":"[parameters('location')]"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "[parameters('subnet4').name]",
+                        "properties": {
+                            "addressPrefix": "[parameters('subnet4').cidr]",
+                            "networkSecurityGroup": "[if(equals(parameters('subnet4').nsgName, ''), json('null'), variables('nsg4-obj-def'))]",
+                            "serviceEndpoints": [
+                                {
+                                    "service": "Microsoft.Storage",
+                                    "locations": "[parameters('location')]"
+                                },
+                                {
+                                    "service": "Microsoft.KeyVault",
+                                    "locations":"[parameters('location')]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "virtualNetworkPeerings": [],
+                "enableDdosProtection": false,
+                "enableVmProtection": false
+            },
+            "dependsOn": [],
+            "tags": "[parameters('tags')]"
+        },
+        {
+            "condition": "[not(empty(parameters('logging').name))]",
+            "type": "Microsoft.Network/virtualNetworks/providers/diagnosticSettings",
+            "name": "[concat(parameters('vnetInfo').name,'/Microsoft.Insights/lzlogging')]",
+            "apiVersion": "2017-05-01-preview",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetInfo').name)]"
+            ],
+            "properties": {
+                "workspaceId": "[if(not(empty(parameters('logging').name)), variables('workspace'), json('null'))]",
+                "logs": [
+                    {
+                        "category": "VMProtectionAlerts",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": false,
+                            "days": 0
+                        }
+                    }
+                ],
+                "metrics": [
+                    {
+                        "category": "AllMetrics",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": false,
+                            "days": 0
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "outputs": {
+        "subnet1-cidr": {
+            "type": "string",
+            "value": "[parameters('subnet1').cidr]"
+        },
+        "subnet2-cidr": {
+            "type": "string",
+            "value": "[parameters('subnet2').cidr]"
+        },
+        "subnet3-cidr": {
+            "type": "string",
+            "value": "[parameters('subnet3').cidr]"
+        },
+        "subnet4-cidr": {
+            "type": "string",
+            "value": "[parameters('subnet3').cidr]"
+        }
+    }
+}

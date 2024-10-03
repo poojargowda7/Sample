@@ -1,0 +1,131 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "string"
+        },
+        "name": {
+            "defaultValue": "Default-VNet",
+            "type": "string"
+        },
+        "cidr": {
+            "defaultValue": "192.168.0.0/22",
+            "type": "string"
+        },
+        "app-gateway-subnet-name": {
+            "defaultValue": "app-gateway",
+            "type": "string"
+        },
+        "app-gateway-subnet-cidr": {
+            "defaultValue": "192.168.1.0/24",
+            "type": "string"
+        },
+        "app-gateway-subnet-nsg": {
+            "defaultValue": "",
+            "type": "string"
+        },
+        "app-gateway-subnet-nsg-rid": {
+            "defaultValue": "",
+            "type": "string"
+        },
+        "web-subnet-name": {
+            "defaultValue": "Application",
+            "type": "string"
+        },
+        "web-subnet-cidr": {
+            "defaultValue": "192.168.2.0/24",
+            "type": "string"
+        },
+        "web-subnet-nsg": {
+            "defaultValue": "",
+            "type": "string"
+        },
+        "data-subnet-name": {
+            "defaultValue": "Data",
+            "type": "string"
+        },
+        "data-subnet-cidr": {
+            "defaultValue": "192.168.3.0/24",
+            "type": "string"
+        },
+        "data-subnet-nsg": {
+            "defaultValue": "",
+            "type": "string"
+        }
+    },
+    "variables": {
+        "app-gateway-subnet-nsg-rid": "[parameters('app-gateway-subnet-nsg-rid')]",
+        "app-gateway-nsg-obj-def": {
+            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('app-gateway-subnet-nsg'))]"
+        },
+        "app-nsg-obj-def": {
+            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('web-subnet-nsg'))]"
+        },
+        "data-nsg-obj-def": {
+            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('data-subnet-nsg'))]"
+        }
+    },
+    "resources": [
+        {
+            "comments": "CF for Azure Default VNet Template",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('name')]",
+            "apiVersion": "2018-01-01",
+            "location": "[parameters('location')]",
+            "scale": null,
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('cidr')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('app-gateway-subnet-name')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('app-gateway-subnet-cidr')]",
+                            "networkSecurityGroup": "[if(equals(parameters('app-gateway-subnet-nsg'), ''), json('null'), variables('app-gateway-nsg-obj-def'))]",
+                            "serviceEndpoints": []
+                        }
+                    },
+                    {
+                        "name": "[parameters('web-subnet-name')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('web-subnet-cidr')]",
+                            "networkSecurityGroup": "[if(equals(parameters('web-subnet-nsg'), ''), json('null'), variables('app-nsg-obj-def'))]",
+                            "serviceEndpoints": []
+                        }
+                    },
+                    {
+                        "name": "[parameters('data-subnet-name')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('data-subnet-cidr')]",
+                            "networkSecurityGroup": "[if(equals(parameters('data-subnet-nsg'), ''), json('null'), variables('data-nsg-obj-def'))]",
+                            "serviceEndpoints": []
+                        }
+                    }
+                ],
+                "virtualNetworkPeerings": [],
+                "enableDdosProtection": false,
+                "enableVmProtection": false
+            },
+            "dependsOn": []
+        }
+    ],
+    "outputs": {
+        "app-gateway-subnet-cidr": {
+            "type": "string",
+            "value": "[parameters('app-gateway-subnet-cidr')]"
+        },
+        "web-subnet-cidr": {
+            "type": "string",
+            "value": "[parameters('web-subnet-cidr')]"
+        },
+        "data-subnet-cidr": {
+            "type": "string",
+            "value": "[parameters('data-subnet-cidr')]"
+        }
+    }
+}

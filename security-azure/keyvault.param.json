@@ -1,0 +1,27 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "settings": {
+            "value": "[profile.service.settingObject.keyVault]"
+        },
+        "options": {
+            "value": "[profile.service.settingObject.kvOptions]"
+        },
+        "tenant": {
+            "value": "[profile.account.Azure.tenantId]"
+        },
+        "tags": {
+            "value": "[profile.tags]"
+        },
+        "vnetInfo": {
+            "value": "[profile.service.settingObject.vnetProperty]"
+        },
+        "subnetInfo": {
+            "value": "[profile.service.settingObject.subnetProperty]"
+        },
+        "privateEndPointConfig": {
+            "value": "[profile.service.settingObject.pvtEndpointProperty]"
+        }
+    }
+}

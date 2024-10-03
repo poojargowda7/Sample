@@ -1,0 +1,58 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "defaultValue": "east us 2",
+            "type": "string"
+        },
+        "nsgList": {
+            "type": "array"
+        },
+        "logging": {
+            "defaultValue": {
+                "name": "",
+                "resourceGroup": "profile-rg"
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "workspace": "[resourceId(parameters('logging').resourceGroup, 'Microsoft.OperationalInsights/workspaces/', parameters('logging').name)]"
+    },
+    "resources": [
+        {
+
+            "condition": "[not(empty(parameters('logging').name))]",
+            "type": "Microsoft.Network/networkSecurityGroups/providers/diagnosticSettings",
+            "name": "[concat(parameters('nsgList')[copyIndex()], '/Microsoft.Insights/lzlogging')]",
+            "copy": {
+                "name": "nsgListLoop",
+                "count": "[length(parameters('nsgList'))]"
+            },
+            "apiVersion": "2017-05-01-preview",
+            "location": "[parameters('location')]",
+            "properties": {
+                "workspaceId": "[if(not(empty(parameters('logging').name)), variables('workspace'), json('null'))]",
+                "logs": [
+                    {
+                        "category": "NetworkSecurityGroupEvent",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": false,
+                            "days": 0
+                        }
+                    },
+                    {
+                        "category": "NetworkSecurityGroupRuleCounter",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": false,
+                            "days": 0
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

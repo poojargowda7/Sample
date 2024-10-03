@@ -1,0 +1,119 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "lbInfo": {
+            "defaultValue": {
+                "name": "loadblancer",
+                "sku": "Standard"
+            },
+            "type": "object"
+        },
+        "location": {
+            "defaultValue": "usgovvirginia",
+            "type": "string"
+        },
+        "lbRule": {
+            "defaultValue": {
+                "protocol": "TCP",
+                "frontPort": "80",
+                "backPort": "80",
+                "idleTimeMin": "4"
+            },
+            "type": "object"
+        },
+        "probeInfo": {
+            "defaultValue": {
+                "protocol": "TCP",
+                "port": "80",
+                "noOfProbes": "2",
+                "intervalTimeSec": "5"
+            },
+            "type": "object"
+        },
+        "lbTags":{
+            "type": "object"
+        },
+        "network":{
+            "defaultValue": {
+                "vnet": "defaultVnet",
+                "subnet": "Web"
+            },
+            "type": "object" 
+        }
+    },
+    "variables": { 
+        "frontEndName": "[concat('frontEnd-', parameters('lbInfo').name)]",
+        "backEndName": "[concat('backEnd-', parameters('lbInfo').name)]",
+        "probeName": "[concat('probe-', parameters('lbInfo').name)]",
+        "loadBalancingRuleName": "[concat('loadBalancingRule-', parameters('lbInfo').name)]",
+        "frontEndId": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', parameters('lbInfo').name, variables('frontEndName'))]",
+        "backEndId": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('lbInfo').name, variables('backEndName'))]",
+        "probeId": "[resourceId('Microsoft.Network/loadBalancers/probes', parameters('lbInfo').name, variables('probeName'))]",
+        "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('network').vnet, parameters('network').subnet)]"
+    
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/loadBalancers",
+            "apiVersion": "2017-10-01",
+            "name": "[parameters('lbInfo').name]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "[parameters('lbInfo').sku]"
+            },
+            "dependsOn": [
+            ],
+            "tags": "[parameters('lbTags')]",
+            "properties": {
+              "frontendIPConfigurations": [
+                {
+                  "properties": {
+                    "subnet": {
+                      "id": "[variables('subnetId')]"
+                    },
+                    "privateIPAllocationMethod": "Dynamic"
+                  },
+                  "name": "[variables('frontEndName')]"
+                }
+              ],
+              "backendAddressPools": [
+                {
+                  "name": "[variables('backEndName')]"
+                }
+              ],
+              "loadBalancingRules": [
+                {
+                  "properties": {
+                    "frontendIPConfiguration": {
+                      "id": "[variables('frontEndId')]"
+                    },
+                    "backendAddressPool": {
+                      "id": "[variables('backEndId')]"
+                    },
+                    "probe": {
+                      "id": "[variables('probeId')]"
+                    },
+                    "protocol": "[parameters('lbRule').protocol]",
+                    "frontendPort": "[parameters('lbRule').frontPort]",
+                    "backendPort": "[parameters('lbRule').backPort]",
+                    "idleTimeoutInMinutes": "[parameters('lbRule').idleTimeMin]"
+                  },
+                  "Name": "[variables('loadBalancingRuleName')]"
+                }
+              ],
+              "probes": [
+                {
+                  "properties": {
+                    "protocol": "[parameters('probeInfo').protocol]",
+                    "port": "[parameters('probeInfo').port]",
+                    "intervalInSeconds": "[parameters('probeInfo').intervalTimeSec]",
+                    "numberOfProbes": "[parameters('probeInfo').noOfProbes]"
+                  },
+                  "name": "[variables('probeName')]"
+                }
+              ]
+            }
+        }
+    ]
+  }

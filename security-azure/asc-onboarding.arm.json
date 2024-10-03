@@ -1,0 +1,99 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspaceSettings": {
+            "type": "object",
+            "metadata": {
+                "description": "name, resourceGroup, emailContact, phoneContact"
+            }
+        },
+        "workspaceOptions": {
+            "type": "object",
+            "metadata": {
+                "description": "name, name1, autoProvisioning, alertsToAdmin, alertNotifications, securitySettings"
+            }
+        },
+        "workspaceSubscriptionId": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the subscriptionId where the custom Log Analytics workspace is deployed."
+            }
+        },
+        "tags": {
+            "type": "object",
+            "metadata": {
+                "description": "Assign tags to deployed resources."
+            }
+        }
+    },
+    "variables": {
+        "workspaceName": "[parameters('workspaceSettings').name]",
+        "workspaceResourceGroup": "[parameters('workspaceSettings').resourceGroup]",
+        "emailSecurityContact": "[parameters('workspaceSettings').emailContact]",
+        "phoneSecurityContact": "[parameters('workspaceSettings').phoneContact]",
+        "name": "[parameters('workspaceOptions').name]",
+        "name1": "[parameters('workspaceOptions').name1]",
+        "autoProvisioning": "[parameters('workspaceOptions').autoProvisioning]",
+        "alertsToAdmin": "[parameters('workspaceOptions').alertsToAdmin]",
+        "alertNotifications": "[parameters('workspaceOptions').alertNotifications]",
+        "securitySettings": "[parameters('workspaceOptions').securitySettings]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Security/autoProvisioningSettings",
+            "name": "[variables('name')]",
+            "apiVersion": "2017-08-01-preview",
+            "properties": {
+                "autoProvision": "[variables('autoProvisioning')]"
+            }
+        },
+        {
+            "type": "Microsoft.Security/workspaceSettings",
+            "apiVersion": "2017-08-01-preview",
+            "name": "[variables('name')]",
+            "properties": {
+                "workspaceId": "[concat('/subscriptions/', parameters('workspaceSubscriptionId'), '/resourceGroups/', variables('workspaceResourceGroup'), '/providers/Microsoft.OperationalInsights/workspaces/', variables('workspaceName'))]",
+                "scope": "[subscription().id]"
+            }
+        },
+        {
+            "type": "Microsoft.Security/securityContacts",
+            "name": "[variables('name1')]",
+            "apiVersion": "2017-08-01-preview",
+            "properties": {
+                "email": "[variables('emailSecurityContact')]",
+                "phone": "[variables('phoneSecurityContact')]",
+                "alertNotifications": "[variables('alertNotifications')]",
+                "alertsToAdmins": "[variables('alertsToAdmin')]"
+            }
+        },
+        {
+            "type": "Microsoft.Security/policies",
+            "apiVersion": "2015-06-01-preview",
+            "name": "[variables('name')]",
+            "properties": {
+                "policyLevel": "Subscription",
+                "name": "[variables('name')]",
+                "unique": "Off",
+                "logCollection": "On",
+                "recommendations": {
+                    "patch": "[variables('securitySettings')]",
+                    "baseline": "[variables('securitySettings')]",
+                    "antimalware": "[variables('securitySettings')]",
+                    "diskEncryption": "On",
+                    "acls": "[variables('securitySettings')]",
+                    "nsgs": "On",
+                    "waf": "On",
+                    "sqlAuditing": "On",
+                    "sqlTde": "[variables('securitySettings')]",
+                    "ngfw": "[variables('securitySettings')]",
+                    "vulnerabilityAssessment": "On",
+                    "storageEncryption": "On",
+                    "jitNetworkAccess": "[variables('securitySettings')]"
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}

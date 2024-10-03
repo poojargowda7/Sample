@@ -1,0 +1,118 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "uniqueDnsName": {
+      "type": "string",
+      "defaultValue": "[concat('trafficManager',uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Relative DNS name for the traffic manager profile, resulting FQDN will be <uniqueDnsName>.trafficmanager.net, must be globally unique."
+      }
+    },
+    "uniqueDnsNameForWebApp": {
+      "type": "string",
+      "defaultValue": "[concat('webApp',uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Relative DNS name for the WebApps, must be globally unique.  An index will be appended for each Web App."
+      }
+    },
+    "webAppLocations": {
+      "type": "array",
+      "defaultValue": [ "West US", "East US" ],
+      "metadata": {
+        "description": "Locations for the WebApps to be hosted, new WebApp and Server Farm in each location"
+      }
+    },
+    "routingMethod": {
+      "type": "string",
+      "defaultValue": "Priority",
+      "allowedValues": [
+        "Priority",
+        "Weighted",
+        "Performance",
+        "Geographic",
+        "Multivalue",
+        "Subnet"
+      ],
+      "metadata": {
+        "description": "Different routing methods for the traffic manager to handle new traffic"
+      }
+
+    },
+    "farmSKU": {
+      "type": "string",
+      "defaultValue": "S1",
+      "metadata": {
+        "description": "The SKU name for the server farms"
+      }
+    }
+
+  },
+
+  "resources": [
+    {
+      "apiVersion": "2015-08-01",
+      "name": "[concat('ServerFarmAppServicePlan', copyIndex())]",
+      "type": "Microsoft.Web/serverfarms",
+      "copy": {
+        "name": "farmloop",
+        "count": "[length(parameters('webAppLocations'))]"
+      },
+      "location": "[parameters('webAppLocations')[copyIndex()]]",
+      "sku": {
+        "name": "[parameters('farmSKU')]"
+      }
+    },
+    {
+      "apiVersion": "2015-08-01",
+      "name": "[concat(parameters('uniqueDnsNameForWebApp'), copyIndex())]",
+      "type": "Microsoft.Web/sites",
+      "copy": {
+        "name": "siteloop",
+        "count": "[length(parameters('webAppLocations'))]"
+      },
+      "location": "[parameters('webAppLocations')[copyIndex()]]",
+      "dependsOn": [ "[concat('ServerFarmAppServicePlan', copyIndex())]" ],
+      "properties": {
+        "serverFarmId": "[concat('ServerFarmAppServicePlan', copyIndex())]"
+      }
+    },
+    {
+      "apiVersion": "2015-11-01",
+      "type": "Microsoft.Network/trafficManagerProfiles",
+      "name": "trafManager",
+      "location": "global",
+      "properties": {
+        "profileStatus": "Enabled",
+        "trafficRoutingMethod": "[parameters('routingMethod')]",
+        "dnsConfig": {
+          "relativeName": "[parameters('uniqueDnsName')]",
+          "ttl": 30
+        },
+        "monitorConfig": {
+          "protocol": "HTTP",
+          "port": 80,
+          "path": "/"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-11-01",
+      "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
+      "dependsOn": [
+        "Microsoft.Network/trafficManagerProfiles/trafManager",
+        "[concat('Microsoft.Web/sites/', parameters('uniqueDnsNameForWebApp'), copyindex())]"
+      ],
+      "location": "global",
+      "name": "[concat('trafManager/Endpoint', copyIndex())]",
+      "copy": {
+        "name": "endpointloop",
+        "count": "[length(parameters('webAppLocations'))]"
+      },
+      "properties": {
+        "targetResourceId": "[resourceId('Microsoft.Web/sites/', concat(parameters('uniqueDnsNameForWebApp'), copyIndex()))]",
+        "endpointStatus": "Enabled"
+      }
+    }
+  ]
+}

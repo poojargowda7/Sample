@@ -1,0 +1,76 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "defaultValue": "usgovvirginia",
+            "type": "string"
+        },
+        "name": {
+            "defaultValue": "Data-Subnet-NSG",
+            "type": "string"
+        },
+        "admin-cidr-list": {
+            "defaultValue": [],
+            "type": "array"
+        },
+        "dataPort": {
+            "defaultValue": 1433,
+            "type": "int"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "comments": "CF for Azure Data Subnet NSG Template",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[parameters('name')]",
+            "apiVersion": "2018-01-01",
+            "location": "[parameters('location')]",
+            "scale": null,
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "SSH",
+                        "properties": {
+                            "protocol": "*",
+                            "access": "Allow",
+                            "priority": 1000,
+                            "direction": "Inbound",
+                            "sourcePortRange": "*",
+                            "sourcePortRanges": [],
+                            "sourceAddressPrefixes": "[parameters('admin-cidr-list')]",
+                            "destinationPortRange": "22",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRanges": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "Data",
+                        "properties": {
+                            "protocol": "*",
+                            "access": "Allow",
+                            "priority": 1010,
+                            "direction": "Inbound",
+                            "sourcePortRange": "*",
+                            "sourcePortRanges": [],
+                            "sourceAddressPrefixes": "[parameters('admin-cidr-list')]",
+                            "destinationPortRange": "[parameters('dataPort')]",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRanges": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    }
+                ]
+            },
+            "dependsOn": []
+        }
+    ],
+    "outputs": {
+        "name": {
+            "type": "string",
+            "value": "[parameters('name')]"
+        }
+    }
+}

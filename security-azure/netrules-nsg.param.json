@@ -1,0 +1,33 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "[profile.property.region]"
+        },
+        "nsg": {
+            "value": "[profile.network.settingObject.nsg]"
+        },
+        "rule1": {
+            "value": "[profile.network.settingObject.rule1]"
+        },
+        "rule2": {
+            "value": "[profile.network.settingObject.rule2]"
+        },
+        "rule3": {
+            "value": "[profile.network.settingObject.rule3]"
+        },
+        "rule4": {
+            "value": "[profile.network.settingObject.rule4]"
+        },
+        "rule5": {
+            "value": "[profile.network.settingObject.rule5]"
+        },
+        "logging": {
+            "value": "[profile.network.settingObject.loggingWorkspace]"
+        },
+        "tags": {
+            "value": "[profile.tags]"
+        }
+    }
+}

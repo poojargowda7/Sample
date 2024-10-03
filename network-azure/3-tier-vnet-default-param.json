@@ -1,0 +1,36 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "usgovvirginia"
+        },
+        "name": {
+            "value": "Default-VNet"
+        },
+        "cidr": {
+            "value": "192.168.0.0/22"
+        },
+        "public-subnet-name": {
+            "value": "Public"
+        },
+        "public-subnet-cidr": {
+            "value": "192.168.1.0/24"
+        },
+        "public-subnet-nsg": {
+            "value": "Public-Subnet-NSG"
+        },
+        "app-subnet-name": {
+            "value": "Application"
+        },
+        "app-subnet-cidr": {
+            "value": "192.168.2.0/24"
+        },
+        "data-subnet-name": {
+            "value": "Data"
+        },
+        "data-subnet-cidr": {
+            "value": "192.168.3.0/24"
+        }
+    }
+}

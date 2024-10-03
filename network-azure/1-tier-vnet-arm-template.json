@@ -1,0 +1,72 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "string"
+        },
+        "name": {
+            "defaultValue": "default-vnet",
+            "type": "string"
+        },
+        "cidr": {
+            "defaultValue": "192.168.0.0/22",
+            "type": "string"
+        },
+        "subnet-name": {
+            "defaultValue": "default-subnet",
+            "type": "string"
+        },
+        "subnet-cidr": {
+            "defaultValue": "192.168.1.0/24",
+            "type": "string"
+        },
+        "subnet-nsg": {
+            "defaultValue": "",
+            "type": "string"
+        }
+    },
+    "variables": {
+        "nsg-obj-def": {
+            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('subnet-nsg'))]"
+        }
+    },
+    "resources": [
+        {
+            "comments": "VNet Template",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('name')]",
+            "apiVersion": "2018-01-01",
+            "location": "[parameters('location')]",
+            "scale": null,
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('cidr')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('subnet-name')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('subnet-cidr')]",
+                            "networkSecurityGroup": "[if(equals(parameters('subnet-nsg'), ''), json('null'), variables('nsg-obj-def'))]",
+                            "serviceEndpoints": []
+                        }
+                    }
+                ],
+                "virtualNetworkPeerings": [],
+                "enableDdosProtection": false,
+                "enableVmProtection": false
+            },
+            "dependsOn": []
+        }
+    ],
+    "outputs": {
+        "subnet-cidr": {
+            "type": "string",
+            "value": "[parameters('subnet-cidr')]"
+        }
+    }
+}

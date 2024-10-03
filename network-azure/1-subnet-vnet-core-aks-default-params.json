@@ -1,0 +1,21 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "east us"
+        },
+        "vnetName": {
+            "value": "vnet-demo-eus"
+        },
+        "vnetAddressPrefix": {
+            "value": "10.10.0.0/16"
+        },
+        "subnetName": {
+            "value": "aks-subnet"
+        },
+        "subnetPrefix": {
+            "value": "10.10.0.0/24"
+        }
+    }
+}

@@ -1,0 +1,12 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "Vnet1Config": {
+            "value": "[profile.network.settingObject.Vnet1Config]"
+        },
+        "Vnet2Config": {
+            "value": "[profile.network.settingObject.Vnet2Config]"
+        }
+    }
+}

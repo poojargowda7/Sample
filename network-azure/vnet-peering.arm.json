@@ -1,0 +1,80 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "peering": {
+            "defaultValue": {
+                "name": "vnetDev",
+                "vnetRemote": "gateway-hub",
+                "resourceGroup": "profileRg",
+                "location": "eastus",
+                "vnet1ResourceID": "vnet1ID",
+                "vnet2ResourceID": "vnet2ID"
+            },
+            "type": "object"
+        },
+        "peeringOptions": {
+            "defaultValue": {
+                "allowVirtualNetworkAccess": true,
+                "allowForwardedTraffic": true,
+                "allowGatewayTransit": false,
+                "useRemoteGateways": false
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "peering1to2Name": "[concat(parameters('peering').name, '/peering-to-', parameters('peering').vnetRemote)]",
+        "peering2to1Name": "[concat(parameters('peering').vnetRemote, '/peering-to-', parameters('peering').name)]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2019-11-01",
+            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+            "name": "[variables('peering1to2Name')]",
+            "location": "[parameters('peering').location]",
+            "properties": {
+                "allowVirtualNetworkAccess": "[parameters('peeringOptions').allowVirtualNetworkAccess]",
+                "allowForwardedTraffic": "[parameters('peeringOptions').allowForwardedTraffic]",
+                "allowGatewayTransit": "[parameters('peeringOptions').allowGatewayTransit]",
+                "useRemoteGateways": "[parameters('peeringOptions').useRemoteGateways]",
+                "remoteVirtualNetwork": {
+                    "id": "[parameters('peering').vnet2ResourceID]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2017-05-10",
+            "name": "nestedTemplate",
+            "type": "Microsoft.Resources/deployments",
+            "resourceGroup": "[parameters('peering').resourceGroup]",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                            "apiVersion": "2019-11-01",
+                            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+                            "name": "[variables('peering2to1Name')]",
+                            "location": "[parameters('peering').location]",
+                            "properties": {
+                                "allowVirtualNetworkAccess": "[parameters('peeringOptions').allowVirtualNetworkAccess]",
+                                "allowForwardedTraffic": "[parameters('peeringOptions').allowForwardedTraffic]",
+                                "allowGatewayTransit": "[parameters('peeringOptions').allowGatewayTransit]",
+                                "useRemoteGateways": "[parameters('peeringOptions').useRemoteGateways]",
+                                "remoteVirtualNetwork": {
+                                    "id": "[parameters('peering').vnet1ResourceID]"
+                                }
+                            }
+                        }
+                    ]
+                },
+                "parameters": {}
+            }
+        }
+    ]
+}

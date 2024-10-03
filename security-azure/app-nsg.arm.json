@@ -1,0 +1,160 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string"
+        },
+        "nsg": {
+            "defaultValue": {
+                "name": "WSDC16-VM",
+                "asgSource": "test2-ref-web-asg",
+                "asgTarget": "test2-ref-app-asg"
+            },
+            "type": "object"
+        },
+        "logging": {
+            "defaultValue": {
+                "name": "",
+                "resourceGroup": "profile-rg"
+            },
+            "type": "object"
+        },
+        "tags": {
+            "type": "object"
+        }
+    },
+    "variables": {
+        "workspace": "[resourceId(parameters('logging').resourceGroup, 'Microsoft.OperationalInsights/workspaces/', parameters('logging').name)]"
+    },
+    "resources": [
+        {
+            "comments": "Placholder NSG within the Virtual network",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[parameters('nsg').name]",
+            "apiVersion": "2017-09-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "HTTP",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "80",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": [],
+                            "sourceApplicationSecurityGroups": [
+                                {
+                                    "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationSecurityGroups', parameters('nsg').asgSource)]",
+                                    "location": "[parameters('location')]",
+                                    "tags": {},
+                                    "properties": {}
+                                }
+                            ],
+                            "destinationApplicationSecurityGroups": [
+                                {
+                                    "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationSecurityGroups', parameters('nsg').asgTarget)]",
+                                    "location": "[parameters('location')]",
+                                    "tags": {},
+                                    "properties": {}
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "Allow_GWM",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "65200-65534",
+                            "sourceAddressPrefix": "GatewayManager",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 140,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": [],
+                            "sourceApplicationSecurityGroups": [
+                            ],
+                            "destinationApplicationSecurityGroups": []
+                        }
+                    },
+                    {
+                        "name": "HTTPS",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "access": "Allow",
+                            "priority": 110,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": [],
+                            "sourceApplicationSecurityGroups": [
+                                {
+                                    "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationSecurityGroups', parameters('nsg').asgSource)]",
+                                    "location": "[parameters('location')]",
+                                    "tags": {},
+                                    "properties": {}
+                                }
+                            ],
+                            "destinationApplicationSecurityGroups": [
+                                {
+                                    "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationSecurityGroups', parameters('nsg').asgTarget)]",
+                                    "location": "[parameters('location')]",
+                                    "tags": {},
+                                    "properties": {}
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "resources": [],
+            "dependsOn": [],
+            "tags": "[parameters('tags')]"
+        },
+        {
+            "condition": "[not(empty(parameters('logging').name))]",
+            "type": "Microsoft.Network/networkSecurityGroups/providers/diagnosticSettings",
+            "name": "[concat(parameters('nsg').name,'/Microsoft.Insights/lzlogging')]",
+            "apiVersion": "2017-05-01-preview",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('nsg').name)]"
+            ],
+            "properties": {
+                "workspaceId": "[if(not(empty(parameters('logging').name)), variables('workspace'), json('null'))]",
+                "logs": [
+                    {
+                        "category": "NetworkSecurityGroupEvent",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": false,
+                            "days": 0
+                        }
+                    },
+                    {
+                        "category": "NetworkSecurityGroupRuleCounter",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": false,
+                            "days": 0
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "outputs": {}
+}

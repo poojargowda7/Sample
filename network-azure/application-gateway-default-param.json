@@ -1,0 +1,39 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "usgovvirginia"
+        },
+        "gatewayName": {
+            "value": "ApplicationGateway"
+        },
+        "subnetName": {
+            "value": "APPGATEWAY-Subnet"
+        },
+        "virtualNetworkName": {
+            "value": "cfa-reference-app-linux-Demo-VNet"
+        },
+        "skuName": {
+            "value": "WAF_Medium"
+        },
+        "capacity": {
+            "value": 2
+        },
+        "pathMatch1": {
+            "value": "/WEB"
+        },
+        "wafEnabled": {
+            "value": true
+        },
+        "wafMode": {
+            "value": "Prevention"
+        },
+        "wafRuleSetType": {
+            "value": "OWASP"
+        },
+        "wafRuleSetVersion": {
+            "value": "3.0"
+        }
+    }
+}

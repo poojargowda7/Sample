@@ -1,0 +1,203 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "settings": {
+            "type": "object"
+        },
+        "options": {
+            "type": "object",
+            "defaultValue": {
+                "skuName":"Standard",
+                "skuFamily": "A",
+                "enabledForDeployment": true,
+                "enabledForTemplateDeployment": true,
+                "enabledForDiskEncryption": true
+            },
+            "metadata": {
+                "description": "SKU for the vault"
+            }
+        },
+        "accessPolicies": {
+            "type": "array",
+            "defaultValue": [],
+            "metadata": {
+                "description": "The access policies defined for this vault."
+            }
+        },
+        "tenant": {
+            "type": "string"
+        },
+        "tags": {
+            "type": "object"
+        },
+        "vnetInfo": {
+            "defaultValue": {
+                "name": "defaultVnet",
+                "cidr": [ "192.168.0.0/22" ],
+                "resourceGroup": ""
+            },
+            "type": "object"
+        },
+        "subnetInfo": {
+            "defaultValue": {
+                "name": "Web",
+                "cidr": "192.168.1.0/24",
+                "nsg": ""
+            },
+            "type": "object"
+        },
+        "privateEndPointConfig": {
+            "defaultValue": {
+                "EndpointName": "default-pvt-endpoint",
+                "privateDnsZoneName": "default-dns-zone",
+                "pvtEndpointDnsGroupName": "default-dnz-group",
+                "groupID": [ "blob",
+                             "files"   ]
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "virtualNetworkName": "[parameters('vnetInfo').name]",
+        "vnetRGId": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',parameters('vnetInfo').resourceGroup)]",
+        "vnetID": "[concat(variables('vnetRGId'),'/providers/Microsoft.Network/virtualNetworks/',variables('virtualNetworkName'))]",
+        "subnetId": "[concat(variables('vnetID'), '/subnets/',parameters('subnetInfo').name)]",
+        "pvtEndPointName": "[parameters('privateEndPointConfig').EndpointName]",
+        "dnsZoneName": "[parameters('privateEndPointConfig').privateDnsZoneName]",
+        "DNSGroupName": "[parameters('privateEndPointConfig').pvtEndpointDnsGroupName]"
+
+    },
+    "resources": [
+        {
+            "apiVersion": "2016-10-01",
+            "name": "[parameters('settings').name]",
+            "location": "[parameters('settings').location]",
+            "type": "Microsoft.KeyVault/vaults",
+            "properties": {
+                "networkAcls": {
+                    "resourceAccessRules": [
+                        {
+                            "resourceId": "[variables('vnetID')]",
+                            "tenantId": "[subscription().tenantId]"
+                        }
+                    ],
+                    "bypass": "AzureServices",
+                    "virtualNetworkRules": [
+                        {
+                            "id": "[variables('subnetId')]",
+                            "action": "Allow"
+                        }
+                    ],
+                    "ipRules": [],
+                    "defaultAction": "Deny"
+                },
+                "publicNetworkAccess": "Enabled",
+                "enabledForDeployment": "[parameters('options').enabledForDeployment]",
+                "enabledForTemplateDeployment": "[parameters('options').enabledForTemplateDeployment]",
+                "enabledForDiskEncryption": "[parameters('options').enabledForDiskEncryption]",
+                "enableSoftDelete": true,
+                "enablePurgeProtection": true,
+                "accessPolicies": "[parameters('accessPolicies')]",
+                "tenantId": "[parameters('tenant')]",
+                "sku": {
+                    "name": "[parameters('options').skuName]",
+                    "family": "[parameters('options').skuFamily]"
+                }
+            },
+            "tags": "[parameters('tags')]"
+        },
+        {
+            "condition": "[not(equals(parameters('settings').diagnosticStorageAccountName,''))]",
+            "type": "Microsoft.KeyVault/vaults/providers/diagnosticsettings",
+            "name": "[concat(parameters('settings').name, '/Microsoft.Insights/service')]",
+            "apiVersion": "2016-09-01",
+            "location": "[parameters('settings').location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('settings').name)]"
+            ],
+            "properties": {
+                "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('settings').diagnosticStorageAccountName)]",
+                "logs": [
+                    {
+                        "category": "AuditEvent",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": true,
+                            "days": "[parameters('settings').logsRetentionInDays]"
+                        }
+                    }
+                ]
+            },
+            "tags": "[parameters('tags')]"
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints",
+            "apiVersion": "2020-05-01",
+            "name": "[variables('pvtEndPointName')]",
+            "location": "[parameters('settings').location]",
+            "properties": {
+                "subnet": {
+                    "id": "[variables('subnetId')]"
+                },
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[variables('pvtEndPointName')]",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.KeyVault/vaults', parameters('settings').name)]",
+                            "groupIds": "[parameters('privateEndPointConfig').groupID]"
+                        }
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('settings').name)]"
+            ]
+        },
+
+        {
+            "type": "Microsoft.Network/privateDnsZones",
+            "apiVersion": "2020-06-01",
+            "name": "[variables('dnsZoneName')]",
+            "location": "global",
+            "properties": {},
+            "dependsOn": [
+    
+            ]
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+            "apiVersion": "2020-06-01",
+            "name": "[format('{0}/{1}', variables('dnsZoneName'), format('{0}-link', variables('dnsZoneName')))]",
+            "location": "global",
+            "properties": {
+                "registrationEnabled": false,
+                "virtualNetwork": {
+                    "id": "[variables('vnetID')]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('dnsZoneName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+            "apiVersion": "2021-05-01",
+            "name": "[concat(variables('pvtEndPointName'),'/', variables('DNSGroupName'))]", 
+            "properties": {
+                "privateDnsZoneConfigs": [
+                    {
+                        "name": "config1",
+                        "properties": {
+                            "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('dnsZoneName'))]"
+                        }
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('dnsZoneName'))]",
+                "[resourceId('Microsoft.Network/privateEndpoints', variables('pvtEndPointName'))]"
+            ]
+        }
+    ]
+}

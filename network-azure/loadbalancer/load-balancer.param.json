@@ -1,0 +1,24 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "lbInfo": {
+            "value": "[profile.network.settingObject.lb]"
+        },
+        "location": {
+            "value": "[profile.property.region]"
+        },
+        "lbRule": {
+            "value": "[profile.network.settingObject.rule]"
+        },
+        "probeInfo": {
+            "value": "[profile.network.settingObject.probe]"
+        },
+        "network":{
+            "value": "[profile.network.settingObject.network]"
+        },
+        "lbTags":{
+           "value": "[profile.tags]"
+        }
+    }
+}

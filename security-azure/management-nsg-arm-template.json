@@ -1,0 +1,74 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "defaultValue": "",
+            "type": "string"
+        },
+        "name": {
+            "defaultValue": "management-subnet-nsg",
+            "type": "string"
+        },
+        "admin-cidr-list": {
+            "defaultValue": [],
+            "type": "array"
+        }
+    },
+    "variables": {
+        "location": "[if(equals(parameters('location'), ''), resourceGroup().location, parameters('location'))]"
+    },
+    "resources": [
+        {
+            "comments": "CF for Azure Default NSG Template",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[parameters('name')]",
+            "apiVersion": "2018-01-01",
+            "location": "[variables('location')]",
+            "scale": null,
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "SSH",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "access": "Allow",
+                            "priority": 1000,
+                            "direction": "Inbound",
+                            "sourcePortRange": "*",
+                            "sourcePortRanges": [],
+                            "sourceAddressPrefixes": "[parameters('admin-cidr-list')]",
+                            "destinationPortRanges": [],
+                            "destinationPortRange": "22",
+                            "destinationAddressPrefix": "*",
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "RDP",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "access": "Allow",
+                            "priority": 1010,
+                            "direction": "Inbound",
+                            "sourcePortRange": "*",
+                            "sourcePortRanges": [],
+                            "sourceAddressPrefixes": "[parameters('admin-cidr-list')]",
+                            "destinationPortRanges": [],
+                            "destinationPortRange": "3389",
+                            "destinationAddressPrefix": "*",
+                            "destinationAddressPrefixes": []
+                        }
+                    }
+                ]
+            },
+            "dependsOn": []
+        }
+    ],
+    "outputs": {
+        "name": {
+            "type": "string",
+            "value": "[parameters('name')]"
+        }
+    }
+}

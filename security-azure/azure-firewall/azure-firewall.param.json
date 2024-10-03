@@ -1,0 +1,27 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "firewall": {
+            "value": "[profile.network.settingObject.firewallInfo]"
+        },
+        "virtualNetworkInfo": {
+            "value": "[profile.network.settingObject.virtualNetworkInfo]"
+        },
+        "subnetInfo": {
+            "value": "[profile.network.settingObject.subnetInfo]"
+        },
+        "publicIPAddresses": {
+            "value": "[profile.network.settingObject.publicIPAddresses]"
+        },
+        "sku": {
+            "value": "[profile.network.settingObject.sku]"
+        },
+        "location": {
+            "value": "[profile.property.region]" 
+        },
+        "ipgroup": {
+            "value": "[profile.network.settingObject.ipgroup]"
+        }
+    }
+}

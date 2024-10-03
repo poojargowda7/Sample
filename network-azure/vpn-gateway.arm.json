@@ -1,0 +1,178 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "name": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string"
+        },
+        "sku": {
+            "type": "string"
+        },
+        "gatewayType": {
+            "type": "string",
+            "defaultValue": "Vpn",
+            "allowedValues": [
+                "Vpn",
+                "ExpressRoute"
+            ]
+        },
+        "vpnGatewayGeneration": {
+            "type": "string"
+        },
+        "vpnType": {
+            "type": "string",
+            "defaultValue": "RouteBased",
+            "allowedValues": [
+                "RouteBased",
+                "PolicyBased"
+            ]
+        },
+        "newPublicIpAddressName": {
+            "type": "string"
+        },
+        "activeActive": {
+            "type": "bool"
+        },
+        "activeActiveGatewayNewPublicIpAddressName": {
+            "type": "string"
+        },
+        "enableBgp": {
+            "type": "bool"
+        },
+        "asn": {
+            "type": "int"
+        },
+        "customBgpIpAddress": {
+            "type": "string"
+        },
+        "secondCustomBgpIpAddress": {
+            "type": "string"
+        },
+        "vnetInfo": {
+            "type": "object"
+        },
+        "subnetInfo": {
+            "type": "object"
+        },
+        "activeActivePublicIPSKU": {
+            "type": "string"
+        },
+        "publicIPSKU": {
+            "type": "string"
+        },
+        "activeActivePublicIPZone": {
+            "type": "array"
+        },
+        "publicIPZone": {
+            "type": "array"
+        }
+    },
+     "variables": {
+         "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetInfo').name, parameters('subnetInfo').name)]",
+         "activeActiveConfig":[
+             "[variables('defaultConfig')[0]]",
+            {
+                "name": "activeActive",
+                "properties": {
+                    "privateIPAllocationMethod": "Dynamic",
+                    "publicIpAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('activeActiveGatewayNewPublicIpAddressName'))]"
+                    },
+                    "subnet": {
+                        "id": "[variables('subnetId')]"
+                    }
+                }
+            }
+         ],
+         "defaultConfig":[
+             {
+                "name": "default",
+                "properties": {
+                    "privateIPAllocationMethod": "Dynamic",
+                    "subnet": {
+                        "id": "[variables('subnetId')]"
+                    },
+                    "publicIpAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('newPublicIpAddressName'))]"
+                    }
+                }
+            }
+         ],
+         "bgpPeeringActiveActiveEnabled":[
+                "[variables('bgpPeeringCustomPrimary')[0]]",
+                {
+                    "ipconfigurationId": "[concat(resourceId('Microsoft.Network/virtualNetworkGateways', parameters('name')), '/ipConfigurations/activeActive')]",
+                    "customBgpIpAddresses": [
+                        "[parameters('secondCustomBgpIpAddress')]"
+                    ]
+                }
+         ],
+         "bgpPeeringCustomPrimary":[
+                {
+                    "ipconfigurationId": "[concat(resourceId('Microsoft.Network/virtualNetworkGateways', parameters('name')),'/ipConfigurations/default')]",
+                    "customBgpIpAddresses": [
+                        "[parameters('customBgpIpAddress')]"
+                    ]
+                }
+         ]
+     },
+    "resources": [
+        {
+            "apiVersion": "2020-11-01",
+            "name": "[parameters('name')]",
+            "type": "Microsoft.Network/virtualNetworkGateways",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', parameters('activeActiveGatewayNewPublicIpAddressName'))]",
+                "[concat('Microsoft.Network/publicIPAddresses/', parameters('newPublicIpAddressName'))]"
+            ],
+            "tags": {},
+            "properties": {
+                "gatewayType": "[parameters('gatewayType')]",
+                "ipConfigurations": "[if(parameters('activeActive'),variables('activeActiveConfig'),variables('defaultConfig'))]",
+                "activeActive": "[parameters('activeActive')]",
+                "enableBgp": "[parameters('enableBgp')]",
+                "bgpSettings": {
+                    "asn": "[parameters('asn')]",
+                    "bgpPeeringAddresses": "[if(parameters('activeActive'),variables('bgpPeeringActiveActiveEnabled'),variables('bgpPeeringCustomPrimary'))]"
+                },
+                "vpnType": "[parameters('vpnType')]",
+                "vpnGatewayGeneration": "[parameters('vpnGatewayGeneration')]",
+                "sku": {
+                    "name": "[parameters('sku')]",
+                    "tier": "[parameters('sku')]"
+                }
+            }
+        },
+        {
+            "condition": "[parameters('activeActive')]",
+            "apiVersion": "2020-08-01",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[parameters('activeActiveGatewayNewPublicIpAddressName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            },
+            "sku": {
+                "name": "[parameters('activeActivePublicIPSKU')]"
+            },
+            "zones": "[parameters('activeActivePublicIPZone')]"
+        },
+        {
+            "apiVersion": "2020-08-01",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[parameters('newPublicIpAddressName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            },
+            "sku": {
+                "name": "[parameters('publicIPSKU')]"
+            },
+            "zones": "[parameters('publicIPZone')]"
+        }
+    ]
+}

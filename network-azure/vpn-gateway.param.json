@@ -1,0 +1,63 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "name": {
+            "value": "[profile.network.settingObject.vpnGatewayDetails.name]"
+        },
+        "location": {
+            "value": "[profile.network.settingObject.vpnGatewayDetails.location]"
+        },
+        "sku": {
+            "value": "[profile.network.settingObject.vpnGatewayDetails.sku]"
+        },
+        "gatewayType": {
+            "value": "[profile.network.settingObject.vpnGatewayDetails.gatewayType]"
+        },
+        "vpnGatewayGeneration": {
+            "value": "[profile.network.settingObject.vpnGatewayDetails.vpnGatewayGeneration]"
+        },
+        "vnetInfo": {
+            "value": "[profile.network.settingObject.vnetNetwork]"
+        },
+        "subnetInfo": {
+            "value": "[profile.network.settingObject.subnetGateway]"
+        },
+        "vpnType": {
+            "value": "[profile.network.settingObject.vpnGatewayDetails.vpnType]"
+        },
+        "newPublicIpAddressName": {
+            "value": "[profile.network.settingObject.vpnGatewayDetails.newPublicIpAddressName]"
+        },
+        "activeActive": {
+            "value": "[profile.network.settingObject.vpnGatewayDetails.activeActive]"
+        },
+        "activeActiveGatewayNewPublicIpAddressName": {
+            "value": "[profile.network.settingObject.vpnGatewayDetails.activeActiveGatewayNewPublicIpAddressName]"
+        },
+        "enableBgp": {
+            "value": "[profile.network.settingObject.vpnGatewayDetails.enableBgp]"
+        },
+        "asn": {
+            "value": "[profile.network.settingObject.vpnGatewayDetails.asn]"
+        },
+        "customBgpIpAddress": {
+            "value": "[profile.network.settingObject.vpnGatewayDetails.customBgpIpAddress]"
+        },
+        "secondCustomBgpIpAddress": {
+            "value": "[profile.network.settingObject.vpnGatewayDetails.secondCustomBgpIpAddress]"
+        },
+        "activeActivePublicIPSKU": {
+            "value": "[profile.network.settingObject.vpnGatewayDetails.activeActivePublicIPSKU]"
+        },
+        "publicIPSKU": {
+            "value": "[profile.network.settingObject.vpnGatewayDetails.publicIPSKU]"
+        },
+        "activeActivePublicIPZone": {
+            "value": "[profile.network.settingObject.vpnGatewayDetails.activeActivePublicIPZone]"
+        },
+        "publicIPZone": {
+            "value": "[profile.network.settingObject.vpnGatewayDetails.publicIPZone]"
+        }
+    }
+}

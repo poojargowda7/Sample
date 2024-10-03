@@ -1,0 +1,113 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vaultInfo": {
+      "defaultValue": {
+        "vault": "rs-vault",
+        "policyName": "DailyBackupPolicy",
+        "backupManagementType": "AzureIaasVM",
+        "timeZone": "UTC"
+      },
+      "type": "object"
+    },
+    "scheduleInfo": {
+      "defaultValue": {
+        "scheduleRunFrequency": "Daily",
+        "scheduleRunTimes": [ "2023-04-06T03:00:00Z" ]
+      },
+      "type": "object"
+    },
+    "retentionDurationCount": {
+      "defaultValue": {
+        "daily": 30,
+        "weekly": 12,
+        "monthly": 12,
+        "yearly": 1
+      },
+      "type": "object"
+    },
+    "retentionSelection": {
+      "defaultValue": {
+        "weekly": [ "Monday", "Wednesday" ],
+        "yearly": [ "January", "July" ]
+      },
+      "type": "object"
+    },
+    "location": {
+      "defaultValue": "East US 2",
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2016-06-01",
+      "name": "[concat(parameters('vaultInfo').vault, '/', parameters('vaultInfo').policyName)]",
+      "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+      "location": "[parameters('location')]",
+      "properties": {
+        "backupManagementType": "[parameters('vaultInfo').backupManagementType]",
+        "schedulePolicy": {
+          "scheduleRunFrequency": "[parameters('scheduleInfo').scheduleRunFrequency]",
+          "scheduleRunDays": null,
+          "scheduleRunTimes": "[parameters('scheduleInfo').scheduleRunTimes]",
+          "schedulePolicyType": "SimpleSchedulePolicy"
+        },
+        "retentionPolicy": {
+          "dailySchedule": {
+            "retentionTimes": "[parameters('scheduleInfo').scheduleRunTimes]",
+            "retentionDuration": {
+              "count": "[parameters('retentionDurationCount').daily]",
+              "durationType": "Days"
+            }
+          },
+          "weeklySchedule": {
+            "daysOfTheWeek": "[parameters('retentionSelection').weekly]",
+            "retentionTimes": "[parameters('scheduleInfo').scheduleRunTimes]",
+            "retentionDuration": {
+              "count": "[parameters('retentionDurationCount').weekly]",
+              "durationType": "Weeks"
+            }
+          },
+          "monthlySchedule": {
+            "retentionScheduleFormatType": "[parameters('scheduleInfo').scheduleRunFrequency]",
+            "retentionScheduleDaily": {
+              "daysOfTheMonth": [
+                {
+                  "date": 1,
+                  "isLast": false
+                }
+              ]
+            },
+            "retentionScheduleWeekly": null,
+            "retentionTimes": "[parameters('scheduleInfo').scheduleRunTimes]",
+            "retentionDuration": {
+              "count": "[parameters('retentionDurationCount').monthly]",
+              "durationType": "Months"
+            }
+          },
+          "yearlySchedule": {
+            "retentionScheduleFormatType": "[parameters('scheduleInfo').scheduleRunFrequency]",
+            "monthsOfYear": "[parameters('retentionSelection').yearly]",
+            "retentionScheduleDaily": {
+              "daysOfTheMonth": [
+                {
+                  "date": 1,
+                  "isLast": false
+                }
+              ]
+            },
+            "retentionScheduleWeekly": null,
+            "retentionTimes": "[parameters('scheduleInfo').scheduleRunTimes]",
+            "retentionDuration": {
+              "count": "[parameters('retentionDurationCount').yearly]",
+              "durationType": "Years"
+            }
+          },
+          "retentionPolicyType": "LongTermRetentionPolicy"
+        },
+        "timeZone": "[parameters('vaultInfo').timeZone]"
+      }
+    }
+  ]
+}

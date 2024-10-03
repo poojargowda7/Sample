@@ -1,0 +1,11 @@
+organization:
+  name: '*'
+  properties:
+    auditor: john-Landis_unisys-com
+    contactName: ananth-ku_in-unisys-com
+    financialOwner: ganapati-kamath_in-unisys-com
+    ownerName: john-landis_unisys-com
+    seniorManager: ganapati-kamath_in-unisys-com
+    dataOwner:  john-landis_unisys-com
+    contactGroup: ananth-ku_in-unisys-com
+    serviceLine: cloudforte

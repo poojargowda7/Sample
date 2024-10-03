@@ -1,0 +1,5 @@
+organization:
+  name: "*"
+  description: Input file for 'cfc init/update  --organization custom.org.yaml
+  properties:
+    conditionRunbookStart: true

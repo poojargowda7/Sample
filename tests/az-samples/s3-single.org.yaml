@@ -1,0 +1,6 @@
+organization:
+  name: '*'
+  properties:
+    contactName:  john.doe@unisys.com
+    serviceLine: Cloudforte
+    systemRgDeleteLock: "true"

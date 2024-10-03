@@ -1,0 +1,10 @@
+account:
+  name: group
+  description: Azure EA/CSP mangement group
+  cloud: AzureCloud
+  AzureMg:
+    tenantId: 8d894c2b-238f-490b-8dd1-d93898c5bf83
+    managementGroupName: CloudForte Tech Test
+    managementGroupId: CloudForteDevTechTest
+  tags:
+    ucf-bus-managed-by: ucf-accelerators-team

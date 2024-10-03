@@ -1,0 +1,33 @@
+account:
+  name: single
+  description: GCP Project
+  cloud: GCPCloud
+  GCP:
+    configurationName: cf-test
+    projectID: cloudforte-accelerators-test
+    enabledServices: storage-component.googleapis.com,compute.googleapis.com,cloudkms.googleapis.com,secretmanager.googleapis.com
+    disabledServices: storage-component.googleapis.com,compute.googleapis.com,cloudkms.googleapis.com,secretmanager.googleapis.com
+  tags:
+    ucf-bus-managed-by: ucf-accelerators-team
+    #Point of contact (POC) responsible for ensuring the subscription meets audit requirements.
+    auditor: ${contactName}
+    #Catch-all POC for any Subscription-related communications.
+    contactName: ${contactName}
+    #Identifies the individual responsible for costs incurred by resources in this subscription.
+    financialOwner: ${contactName}
+    #Denotes if the Subscription contains any resources with a Public IP address that allows direct Internet connectivity.
+    hasPublicIP: No
+    #Denotes if the Subscription is able to interact with Client data centers or if it is isolated to cloud-only operations.
+    hasHybridNetworkConnection: No
+    #Records the last date the subscription was audited to meet company standards.
+    lastAudited: ""
+    #Identifies if the Subscription supports one or multiple tenants.
+    multiTenant: No
+    #Records the person directly responsible for this Subscription.
+    ownerName: ${contactName}
+    #Identifies if a subscription supports customers or internal usage - based on Management Group.('CLIENT/OTHERS')
+    rootGroup: ""
+    #Identifies the company leader this Subscription ultimately falls under. Director/VP level.
+    seniorManager: ${contactName}
+    #Identifies if the subscription is managed by Client personnel.
+    clientManaged: No

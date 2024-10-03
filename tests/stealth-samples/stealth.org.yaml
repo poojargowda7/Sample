@@ -1,0 +1,22 @@
+organization:
+  name: "*"
+  description: Input file for 'cfc init/update  --organization custom.org.yaml
+  properties:
+    conditionProfileArtifacts: true
+    conditionProfileShared: false
+    conditionProfileStealth: false
+    conditionStealthVMs: false
+    conditionProfileDev: false
+    conditionProfileTest: false
+    conditionProfileProd: false
+    conditionProfileDr: false
+    conditionLinuxGuest: false
+    conditionWindowsGuest: false
+    conditionRunbookStart: false
+    systemHash: "0044"
+    systemHash2: "1001"
+    artifactsStagedBlobs: ${library}/az/stealth/scripts
+    artifactsStagedFiles: ${library}/az/stealth/scripts
+    pwd: $  # resolves to path used to compile (`cfc info --path current`)
+    artifactsBigBlobs: ${library}/az/stealth/images
+    artifactsBigFiles: ${library}/az/stealth/images

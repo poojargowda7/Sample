@@ -1,0 +1,22 @@
+organization:
+  name: '*'
+  description: Input file for 'cfc init/update  --organization custom.org.yaml
+  properties:
+    conditionProfileArtifacts: true
+    conditionProfileStealth: true
+    conditionStealthVMs: true
+    conditionProfileDev: true
+    conditionProfileTest: false
+    conditionProfileProd: false
+    conditionProfileDr: false
+    conditionLinuxGuest: true
+    conditionWindowsGuest: true
+    conditionRunbookStart: false
+    conditionStealthJenkins: true
+    conditionStealthSvg: true
+    systemHash: "0044"
+    systemHash2: "1001"
+    # artifactsLocation: ""
+    artifactsSasToken: "stubToken"
+    automationImageId: /subscriptions/b26ca35c-986a-4601-8b6b-dc9abbcdd105/resourceGroups/jnknVM1-ref-vm-rg/providers/Microsoft.Compute/galleries/CFASharedImages/images/CFAWindowsImage/versions/1.0.1
+    svgImageId: /subscriptions/b26ca35c-986a-4601-8b6b-dc9abbcdd105/resourceGroups/jnknVM1-ref-vm-rg/providers/Microsoft.Compute/galleries/CFASharedImages/images/CFALinuxImage/versions/1.0.1

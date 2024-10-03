@@ -1,0 +1,160 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "defaultValue": "usgovvirginia",
+            "type": "string"
+        },
+        "name": {
+            "defaultValue": "WSDC16-VM",
+            "type": "string"
+        },
+        "vnet": {
+            "defaultValue": "CF-Default-VNet",
+            "type": "string"
+        },
+        "subnet": {
+            "defaultValue": "Public",
+            "type": "string"
+        },
+        "sku": {
+            "defaultValue": "2016-Datacenter",
+            "type": "string"
+        },
+        "offer": {
+            "defaultValue": "WindowsServer",
+            "type": "string"
+        },
+        "publisher": {
+            "defaultValue": "MicrosoftWindowsServer",
+            "type": "string"
+        },
+        "size": {
+            "defaultValue": "Standard_B2s",
+            "type": "string"
+        },
+        "user": {
+            "defaultValue": "cfadmin",
+            "type": "string"
+        },
+        "defaultPassword": {
+            "defaultValue": "",
+            "type": "string"
+        },
+        "networkInterfaceName": {
+            "defaultValue": "WSDC16-VM1-NIC",
+            "type": "string"
+        },
+        "publicIpAddressName": {
+            "defaultValue": "WSDC16-VM1-ip",
+            "type": "string"
+        },
+        "publicIpAddressType": {
+            "defaultValue": "Static",
+            "type": "string"
+        },
+        "publicIpAddressSku": {
+            "defaultValue": "Basic",
+            "type": "string"
+        },
+        "storageAccountName": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnet'))]",
+        "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnet'))]"
+    },
+    "resources": [
+        {
+            "name": "[parameters('name')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2018-04-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]"
+            ],
+            "properties": {
+                "osProfile": {
+                    "computerName": "[parameters('name')]",
+                    "adminUsername": "[parameters('user')]",
+                    "adminPassword": "[parameters('defaultPassword')]",
+                    "windowsConfiguration": {
+                        "provisionVmAgent": "true"
+                    }
+                },
+                "hardwareProfile": {
+                    "vmSize": "[parameters('size')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[parameters('publisher')]",
+                        "offer": "[parameters('offer')]",
+                        "sku": "[parameters('sku')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "osdisk",
+                        "vhd": {
+                            "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2017-10-01').primaryEndpoints['blob'],'vhds/', parameters('name'), '-osdisk.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "fromImage"
+                    },
+                    "dataDisks": []
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "[parameters('networkInterfaceName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2018-04-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIpAddresses/', parameters('publicIpAddressName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIpAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[parameters('publicIpAddressName')]",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "2017-08-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publicIpAllocationMethod": "[parameters('publicIpAddressType')]"
+            },
+            "sku": {
+                "name": "[parameters('publicIpAddressSku')]"
+            }
+        }
+    ],
+    "outputs": {
+        "adminUsername": {
+            "type": "string",
+            "value": "[parameters('user')]"
+        }
+    }
+}

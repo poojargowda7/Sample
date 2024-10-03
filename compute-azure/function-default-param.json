@@ -1,0 +1,24 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "functionName": {
+            "value": "cfa-prod-lifecyclemanager"
+        },
+        "appPlanName": {
+            "value": "cfa-prod-app-plan"
+        },
+        "storageAccountName": {
+            "value": "cfaprodsystemstorage"
+        },
+        "location": {
+            "value": "Usgovvirginia"
+        },
+        "adminCidr": {
+            "value": "4.14.236.82/32"
+        },
+        "govCloudDeployment": {
+            "value": true
+        }
+    }
+}

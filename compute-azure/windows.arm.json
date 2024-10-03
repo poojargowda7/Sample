@@ -1,0 +1,289 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vm": {
+            "defaultValue": {
+                "location": "eastus",
+                "name": "WSDC16-VM",
+                "size": "Standard_B2s",
+                "storage": "Premium_LRS"
+            },
+            "type": "object",
+            "metadata": {
+                "description": "count property is optional"
+            }
+        },
+        "image": {
+            "defaultValue": {
+                "publisher": "Canonical",
+                "offer": "Ubuntu",
+                "sku": "20.04",
+                "version": "latest"
+            },
+            "metadata": {
+                "description": "image property is expected to have either id or publisher/offer/sku/version"
+            },
+            "type": "object"
+        },
+        "network": {
+            "defaultValue": {
+                "interfaceSuffix": "-nic",
+                "resourceGroup": "profile-network-rg",
+                "vnet": "CF-Default-VNet",
+                "subnet": "Web"
+            },
+            "type": "object"
+        },
+        "vmOptions": {
+            "defaultValue": {
+                "hyperthreading": true
+            },
+            "type": "object"
+        },
+        "publicIp": {
+            "defaultValue": {
+                "addressSuffix": "-IP",
+                "addressType": "Static",
+                "addressSku": "Basic",
+                "addressDns": ""
+            },
+            "type": "object"
+        },
+        "user": {
+            "defaultValue": "cfadmin",
+            "type": "string"
+        },
+        "password": {
+            "defaultValue": "",
+            "type": "SecureString"
+        },
+        "logging": {
+            "defaultValue": {
+                "name": "",
+                "resourceGroup": "profile-rg"
+            },
+            "type": "object"
+        },
+        "availabilitySet": {
+            "defaultValue": {
+                "name": ""
+            },
+            "type": "object"
+        },
+        "script": {
+            "defaultValue": {
+                "scriptName": "",
+                "artifactsLocation": "",
+                "artifactsFolder": "",
+                "artifactsFile": "some.txt",
+                "artifactsSasToken": "",
+                "artifactsManifest": "",
+                "targetFolder": ""
+            },
+            "type": "object"
+        },
+        "tags": {
+            "defaultValue": {},
+            "type": "object"
+        },
+        "backup": {
+            "defaultValue": {},
+            "type": "object"
+        }
+    },
+    "variables": {
+        "publicIpEnabled": "[if(equals(parameters('publicIp').addressSku,'None'),'Off','On')]",
+        "interfaceSuffix": "[parameters('network').interfaceSuffix]",
+        "publicIpAddressSuffix": "[parameters('publicIp').addressSuffix]",
+        "vnetId": "[resourceId(parameters('network').resourceGroup,'Microsoft.Network/virtualNetworks', parameters('network').vnet)]",
+        "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('network').subnet)]",
+        "hyperThread": "[if(parameters('vmOptions').hyperthreading, json('{}'), json('{\"platformsettings.host_environment.disablehyperthreading\":\"true\"}'))]",
+        "availabilitySetEnabled": { "id": "[resourceId(resourceGroup().name, 'Microsoft.Compute/availabilitySets', parameters('availabilitySet').name)]" },
+        "workspace": "[resourceId(parameters('logging').resourceGroup, 'Microsoft.OperationalInsights/workspaces/', parameters('logging').name)]",
+        "targetFolder": "[parameters('script').targetFolder]",
+        "scriptFolder": ".",
+        "scriptFileName": "[parameters('script').scriptName]",
+        "artifactsFolder": "[parameters('script').artifactsFolder]",
+        "targetFile": "[parameters('script').artifactsFile]",
+        "targetManifest": "[parameters('script').artifactsManifest]",
+        "scriptParameters": "[concat('-artifactsLocation ', parameters('script').artifactsLocation, ' -artifactsLocationSasToken \"', parameters('script').artifactsSasToken, '\" -artifactsFolder \"', variables('artifactsFolder'), '\" -folderName ', variables('targetFolder'), ' -manifestFile ', variables('targetManifest'), ' -fileToInstall ', variables('targetFile'))]",
+        "countPresent": "[contains(parameters('vm'), 'count')]",
+        "vmCount": "[if(variables('countPresent'), int(parameters('vm').count), 1 )]",
+        "copy": [
+            {
+                "name": "vmNames",
+                "count": "[variables('vmCount')]",
+                "input": "[concat(parameters('vm').name, if(variables('countPresent'), copyIndex('vmNames', 1), ''))]"
+            }
+        ],
+        "tagsProvided1": "[or(contains(parameters('backup'), 'profileTagName'),contains(parameters('backup'), 'profileTagValue'))]",
+		"tagObject1": "[if(variables('tagsProvided1'),createObject(parameters('backup').profileTagName, parameters('backup').profileTagValue),json('{}'))]",
+		"tagsProvided2": "[or(contains(parameters('backup'), 'backupTagName'),contains(parameters('backup'), 'backupTagValue'))]",
+		"tagObject2": "[if(variables('tagsProvided2'),createObject(parameters('backup').backupTagName, parameters('backup').backupTagValue),json('{}'))]"
+    },
+    "resources": [
+        {
+            "name": "[variables('vmNames')[copyIndex('vmInstances',0)]]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "copy": {
+                "name": "vmInstances",
+                "count": "[variables('vmCount')]"
+            },
+            "apiVersion": "2018-06-01",
+            "location": "[parameters('vm').location]",
+            "tags": "[union(parameters('tags'),variables('tagObject1'), variables('tagObject2'), variables('hyperThread'))]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', variables('vmNames')[copyIndex('vmInstances',0)], variables('interfaceSuffix'))]"
+            ],
+            "properties": {
+                "osProfile": {
+                    "computerName": "[variables('vmNames')[copyIndex('vmInstances',0)]]",
+                    "adminUsername": "[parameters('user')]",
+                    "adminPassword": "[parameters('password')]",
+                    "windowsConfiguration": {
+                        "provisionVmAgent": true
+                    }
+                },
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vm').size]"
+                },
+                "storageProfile": {
+                    "imageReference": "[parameters('image')]",
+                    "osDisk": {
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "[parameters('vm').storage]"
+                        }
+                    },
+                    "dataDisks": []
+                },
+                "availabilitySet": "[if(equals(parameters('availabilitySet').name,''), json('null'), variables('availabilitySetEnabled'))]",
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('vmNames')[copyIndex('vmInstances',0)], variables('interfaceSuffix')))]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "[concat(variables('vmNames')[copyIndex('vmInstances',0)], variables('interfaceSuffix'))]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "copy": {
+                "name": "vmInstances",
+                "count": "[variables('vmCount')]"
+            },
+            "apiVersion": "2018-04-01",
+            "location": "[parameters('vm').location]",
+            "tags": "[parameters('tags')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIpAddresses/', variables('vmNames')[copyIndex('vmInstances',0)], variables('publicIpAddressSuffix'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIpAddress": "[if(equals(variables('publicIpEnabled'),'On'), createObject('id', resourceId('Microsoft.Network/publicIpAddresses/', concat(parameters('vm').name, if(variables('countPresent'), copyIndex(1), ''),variables('publicIpAddressSuffix')))), json('null'))]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "condition": "[not(equals(parameters('script').artifactsLocation,''))]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(variables('vmNames')[copyIndex('vmInstances',0)], '/CustomScriptExtension')]",
+            "copy": {
+                "name": "vmInstances",
+                "count": "[variables('vmCount')]"
+            },
+            "apiVersion": "2017-03-30",
+            "location": "[parameters('vm').location]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', variables('vmNames')[copyIndex('vmInstances',0)])]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.8",
+                "autoUpgradeMinorVersion": true,
+                "Settings": {
+                    "fileUris": [
+                        "[uri(parameters('script').artifactsLocation, concat(variables('ScriptFileName'), parameters('script').artifactsSasToken))]"
+                    ],
+                    "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('scriptFolder'), '/', variables('scriptFileName'), ' ', variables('scriptParameters'))]"
+                },
+                "protectedSettings": {}
+            }
+        },
+        {
+            "condition": "[not(empty(parameters('logging').name))]",
+            "name": "[concat(variables('vmNames')[copyIndex('vmInstances',0)], '/IaaSAntimalware')]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "copy": {
+                "name": "vmInstances",
+                "count": "[variables('vmCount')]"
+            },
+            "apiVersion": "2017-12-01",
+            "location": "[parameters('vm').location]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', variables('vmNames')[copyIndex('vmInstances',0)])]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+                "type": "MicrosoftMonitoringAgent",
+                "typeHandlerVersion": "1.0",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "workspaceId": "[if(not(empty(parameters('logging').name)), reference(variables('workspace'), '2015-03-20').customerId, json('null'))]"
+                },
+                "protectedSettings": {
+                    "workspaceKey": "[if(not(empty(parameters('logging').name)), listKeys(variables('workspace'), '2015-03-20').primarySharedKey, json('null'))]"
+                }
+            }
+        },
+        {
+            "condition": "[equals(variables('publicIpEnabled'),'On')]",
+            "name": "[concat(variables('vmNames')[copyIndex('vmInstances',0)], variables('publicIpAddressSuffix'))]",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "copy": {
+                "name": "vmInstances",
+                "count": "[variables('vmCount')]"
+            },
+            "apiVersion": "2017-08-01",
+            "location": "[parameters('vm').location]",
+            "tags": "[parameters('tags')]",
+            "properties": {
+                "publicIpAllocationMethod": "[parameters('publicIp').addressType]"
+            },
+            "sku": {
+                "name": "[parameters('publicIp').addressSku]"
+            }
+        }
+    ],
+    "outputs": {
+        "name": {
+            "type": "string",
+            "value": "[parameters('vm').name]"
+        },
+        "adminUsername": {
+            "type": "string",
+            "value": "[parameters('user')]"
+        },
+        "publicIP": {
+            "condition": "[equals(variables('publicIpEnabled'),'On')]",
+            "type": "array",
+            "copy": {
+                "count": "[variables('vmCount')]",
+                "input": "[reference(resourceId('Microsoft.Network/publicIpAddresses/', concat(variables('vmNames')[copyIndex(0)], variables('publicIpAddressSuffix')))).ipAddress]"
+            }
+        }
+    }
+}

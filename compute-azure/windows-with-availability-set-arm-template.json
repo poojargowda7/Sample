@@ -1,0 +1,168 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "string"
+        },
+        "name": {
+            "defaultValue": "WSDC16-VM",
+            "type": "string"
+        },
+        "numberOfInstances": {
+            "type": "int",
+            "defaultValue": 2,
+            "minValue": 1,
+            "maxValue": 2
+        },
+        "availabilitySetName": {
+            "defaultValue": "availabilitySet",
+            "type": "string"
+        },
+        "applicationGatewayName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Application gateway name to which the VM is to be added. It can be null"
+            },
+            "type": "string"
+        },
+        "appGatewayBackendPoolName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Backend pool name of the Application gateway name to which the VM is to be added. It can be null"
+            },
+            "type": "string"
+        },
+        "vnet": {
+            "defaultValue": "CF-Default-VNet",
+            "type": "string"
+        },
+        "subnet": {
+            "defaultValue": "Public",
+            "type": "string"
+        },
+        "sku": {
+            "defaultValue": "2016-Datacenter",
+            "type": "string"
+        },
+        "offer": {
+            "defaultValue": "WindowsServer",
+            "type": "string"
+        },
+        "publisher": {
+            "defaultValue": "MicrosoftWindowsServer",
+            "type": "string"
+        },
+        "size": {
+            "defaultValue": "Standard_B2s",
+            "type": "string"
+        },
+        "user": {
+            "defaultValue": "cfadmin",
+            "type": "string"
+        },
+        "password": {
+            "defaultValue": "",
+            "type": "string"
+        },
+        "networkInterfaceName": {
+            "defaultValue": "WSDC16-VM1-NIC",
+            "type": "string"
+        }
+    },
+    "variables": {
+        "applicationGatewayBackendAddressPools": [
+            {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('applicationGatewayName')), concat('/backendAddressPools/', parameters('appGatewayBackendPoolName')))]"
+            }
+        ],
+        "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnet'))]",
+        "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnet'))]"
+    },
+    "resources": [
+        {
+            "name": "[if(equals(parameters('numberOfInstances'), 1), parameters('networkInterfaceName'), concat(parameters('networkInterfaceName'), copyindex(1)))]",
+            "comments": "This template adds the Network interfaces to the Application Gateway's backend pool conditionally",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2018-04-01",
+            "location": "[parameters('location')]",
+            "copy": {
+                "name": "networkInterfaceLoop",
+                "count": "[parameters('numberOfInstances')]"
+            },
+            "dependsOn": [],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic",
+                            "applicationGatewayBackendAddressPools": "[if(not(equals(parameters('applicationGatewayName'), '')), variables('applicationGatewayBackendAddressPools') , json('[]'))]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[if(equals(parameters('numberOfInstances'), 1), parameters('name'), concat(parameters('name'), copyindex(1)))]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2018-04-01",
+            "location": "[parameters('location')]",
+            "copy": {
+                "name": "vmLoop",
+                "count": "[parameters('numberOfInstances')]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', if(equals(parameters('numberOfInstances'), 1), parameters('networkInterfaceName'), concat(parameters('networkInterfaceName'), copyindex(1))))]"
+            ],
+            "properties": {
+                "osProfile": {
+                    "computername": "[if(equals(parameters('numberOfInstances'), 1), parameters('name'), concat(parameters('name'), copyindex(1)))]",
+                    "adminUsername": "[parameters('user')]",
+                    "adminPassword": "[parameters('password')]",
+                    "windowsConfiguration": {
+                        "provisionVmAgent": "true"
+                    }
+                },
+                "hardwareProfile": {
+                    "vmSize": "[parameters('size')]"
+                },
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets',parameters('availabilitySetName'))]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[parameters('publisher')]",
+                        "offer": "[parameters('offer')]",
+                        "sku": "[parameters('sku')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        }
+                    },
+                    "dataDisks": []
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId(resourceGroup().name,'Microsoft.Network/networkInterfaces', if(equals(parameters('numberOfInstances'), 1), parameters('networkInterfaceName'), concat(parameters('networkInterfaceName'), copyindex(1))))]"
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "adminUsername": {
+            "type": "string",
+            "value": "[parameters('user')]"
+        }
+    }
+}

@@ -1,0 +1,65 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmList": {
+      "type": "string",
+      "metadata": {
+        "description": "Array of Azure virtual machines. e.g. [\"vm1\",\"vm2\",\"vm3\"]"
+      }
+    },
+    "loggingWorkspace": {
+      "defaultValue": {
+        "name": "",
+        "resourceGroup": "profile-rg"
+      },
+      "type": "object"
+
+    },
+    "monitoringProperties": {
+      "defaultValue": {
+        "type": "OmsAgentForLinux",
+        "typeVersion": "1.7",
+        "publisher": "Microsoft.EnterpriseCloud.Monitoring"
+      },
+      "type": "object"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "workspace": "[resourceId(parameters('loggingWorkspace').resourceGroup, 'Microsoft.OperationalInsights/workspaces/', parameters('loggingWorkspace').name)]",
+    "listOfVMs": "[split(parameters('vmList'), ',')]",
+    "arrayOfVMs": "[array(variables('listOfVMs'))]"
+  },
+  "resources": [
+    {
+      "condition": "[not(empty(parameters('loggingWorkspace').name))]",
+      "name": "[concat(variables('arrayOfVMs')[copyIndex()], '/' , parameters('monitoringProperties').type)]",
+      "copy": {
+        "name": "vmListLoop",
+        "count": "[length(variables('arrayOfVMs'))]"
+      },
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2017-12-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "[parameters('monitoringProperties').publisher]",
+        "type": "[parameters('monitoringProperties').type]",
+        "typeHandlerVersion": "[parameters('monitoringProperties').typeVersion]",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "workspaceId": "[if(not(empty(parameters('loggingWorkspace').name)), reference(variables('workspace'), '2015-03-20').customerId, json('null'))]"
+        },
+        "protectedSettings": {
+          "workspaceKey": "[if(not(empty(parameters('loggingWorkspace').name)), listKeys(variables('workspace'), '2015-03-20').primarySharedKey, json('null'))]"
+        }
+      }
+    }
+  ]
+}

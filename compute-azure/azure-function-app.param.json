@@ -1,0 +1,24 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "appInfo": {
+            "value": "[profile.service.settingObject.appInfo]"
+        },
+        "appServicePlan": {
+            "value": "[profile.service.settingObject.appServicePlan]"
+        },
+        "storageAccount": {
+            "value": "[profile.service.settingObject.storageAccount]"
+        },
+        "location": {
+            "value": "[profile.property.region]"
+        },
+        "appInsights": {
+            "value": "[profile.service.settingObject.appInsights]"
+        },
+        "runtime": {
+            "value": "[profile.service.settingObject.runtime]"
+        }        
+    }
+}

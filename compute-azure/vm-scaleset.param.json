@@ -1,0 +1,33 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmssConfig": {
+            "value": "[profile.service.settingObject.vmssSettings]"
+        },
+        "adminUsername": {
+            "value": "[profile.service.setting.adminUser]"
+        },
+        "adminPassword": {
+            "value": "[profile.service.setting.adminPassword]"
+        },
+        "osImageConfig": {
+            "value": "[profile.service.settingObject.osImageSettings]"
+        },
+        "scaleOutMetricTrigger": {
+            "value": "[profile.service.settingObject.scaleOutMetric]"
+        },
+        "scaleOutAction": {
+            "value": "[profile.service.settingObject.scaleOutAction]"
+        },
+        "scaleInMetricTrigger": {
+            "value": "[profile.service.settingObject.scaleInMetric]"
+        },
+        "scaleInAction": {
+            "value": "[profile.service.settingObject.scaleInAction]"
+        },
+        "tags": {
+            "value": "[profile.tags]"
+        }
+    }
+}

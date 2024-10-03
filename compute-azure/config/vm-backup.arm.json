@@ -1,0 +1,47 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmResourceGroup": {
+      "type": "string"
+    },
+    "vmList": {
+      "type": "string"
+    },
+    "backup": {
+      "type": "object"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "backupFabric": "Azure",
+    "v2VmType": "Microsoft.Compute/virtualMachines",
+    "v2VmContainer": "iaasvmcontainer;iaasvmcontainerv2;",
+    "v2Vm": "vm;iaasvmcontainerv2;",
+    "listOfVMs": "[split(parameters('vmList'), ',')]",
+    "arrayOfVMs": "[array(variables('listOfVMs'))]"
+  },
+  "resources": [
+    {
+      "name": "[concat(parameters('backup').vault, '/', variables('backupFabric'), '/', variables('v2VmContainer'), concat(parameters('vmResourceGroup'),';',variables('arrayOfVMs')[copyIndex()]), '/', variables('v2Vm'), concat(parameters('vmResourceGroup'),';',variables('arrayOfVMs')[copyIndex()]))]",
+      "apiVersion": "2016-06-01",
+      "location": "[parameters('location')]",
+      "type": "Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems",
+      "copy": {
+        "name": "v2VmsCopy",
+        "count": "[length(variables('arrayOfVMs'))]"
+      },
+      "properties": {
+        "protectedItemType": "[variables('v2VmType')]",
+        "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies',parameters('backup').vault,parameters('backup').policyName )]",
+        "sourceResourceId": "[resourceId(parameters('vmResourceGroup'),'Microsoft.Compute/virtualMachines',variables('arrayOfVMs')[copyIndex()])]"
+      }
+    }
+  ]
+}

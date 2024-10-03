@@ -1,0 +1,42 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vm": {
+            "value": "[profile.service.settingObject.vmSettings]"
+        },
+        "image": {
+            "value": "[profile.service.settingObject.vmImage]"
+        },
+        "network": {
+            "value": "[profile.service.settingObject.vmNetwork]"
+        },
+        "publicIp": {
+            "value": "[profile.service.settingObject.vmPublicIp]"
+        },
+        "user": {
+            "value": "[profile.service.setting.adminUser]"
+        },
+        "password": {
+            "value": "[profile.service.setting.adminPassword]"
+        },
+        "vmOptions": {
+            "value": "[profile.service.settingObject.vmOptions]"
+        },
+        "logging": {
+            "value": "[profile.service.settingObject.loggingWorkspace]"
+        },
+        "availabilitySet": {
+            "value": "[profile.service.settingObject.availabilitySet]"
+        },
+        "script": {
+            "value": "[profile.service.settingObject.customScript]"
+        },
+        "tags": {
+            "value": "[profile.tags | profile.service.settingObject.tags]"
+        },
+        "backup": {
+            "value": "[profile.service.settingObject.backup]"
+        }
+    }
+}

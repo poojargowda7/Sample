@@ -1,0 +1,72 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "functionName": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "storageAccountName": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "govCloudDeployment": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+                "description": "When set to 'true', indicates that the deployment is to Azure Government cloud."
+            }
+        }
+    },
+    "variables": {
+        "storageAccountid": "[concat(resourceGroup().id,'/providers/','Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+        "storageConnectionStringPrefix": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=')]",
+        "azureStorageEndpointSuffix": "[if(equals(parameters('govCloudDeployment'), bool('true')), ';EndpointSuffix=core.usgovcloudapi.net', ';EndpointSuffix=core.windows.net')]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2016-03-01",
+            "name": "[parameters('functionName')]",
+            "type": "Microsoft.Web/sites",
+            "properties": {
+                "name": "[parameters('functionName')]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "FUNCTIONS_WORKER_RUNTIME",
+                            "value": "node"
+                        },
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat(variables('storageConnectionStringPrefix'), listKeys(variables('storageAccountid'),'2015-05-01-preview').key1, variables('azureStorageEndpointSuffix'))]"
+                        },
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~2"
+                        },
+                        {
+                            "name": "AzureWebJobsDashboard",
+                            "value": "[concat(variables('storageConnectionStringPrefix'), listKeys(variables('storageAccountid'),'2015-05-01-preview').key1, variables('azureStorageEndpointSuffix'))]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                            "value": "[concat(variables('storageConnectionStringPrefix'), listKeys(variables('storageAccountid'),'2015-05-01-preview').key1, variables('azureStorageEndpointSuffix'))]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTSHARE",
+                            "value": "[concat(toLower(parameters('functionName')), 'af93')]"
+                        },
+                        {
+                            "name": "WEBSITE_NODE_DEFAULT_VERSION",
+                            "value": "8.11.1"
+                        }
+                    ]
+                },
+                "clientAffinityEnabled": false,
+                "reserved": false
+            },
+            "location": "[resourceGroup().location]",
+            "kind": "functionapp"
+        }
+    ]
+}

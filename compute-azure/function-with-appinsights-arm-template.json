@@ -1,0 +1,187 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "functionName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the function app that you wish to create."
+            }
+        },
+        "appPlanName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the app plan that you wish to create."
+            }
+        },
+        "storageAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "Storage account to be used for the function."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "govCloudDeployment": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+                "description": "When set to 'true', indicates that the deployment is to Azure Government cloud."
+            }
+        }
+    },
+    "variables": {
+        "functionAppName": "[parameters('functionName')]",
+        "storageAccountid": "[concat(resourceGroup().id,'/providers/','Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+        "storageConnectionStringPrefix": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=')]",
+        "azureGovStorageEndpointSuffix": ";EndpointSuffix=core.usgovcloudapi.net"
+    },
+    "resources": [
+        {
+            "comments": "WebServer plan to run the functions",
+            "type": "Microsoft.Web/serverfarms",
+            "sku": {
+                "name": "Y1",
+                "tier": "Dynamic",
+                "size": "Y1",
+                "family": "Y",
+                "capacity": 0
+            },
+            "apiVersion": "2016-09-01",
+            "name": "[parameters('appPlanName')]",
+            "location": "[parameters('location')]",
+            "kind": "functionapp",
+            "scale": null,
+            "properties": {
+                "name": "[parameters('appPlanName')]",
+                "workerTierName": null,
+                "adminSiteName": null,
+                "hostingEnvironmentProfile": null,
+                "perSiteScaling": false,
+                "reserved": false,
+                "targetWorkerCount": 0,
+                "targetWorkerSizeId": 0
+            }
+        },
+        {
+            "apiVersion": "2015-08-01",
+            "type": "Microsoft.Web/sites",
+            "name": "[variables('functionAppName')]",
+            "location": "[parameters('location')]",
+            "kind": "functionapp",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', parameters('appPlanName'))]"
+            ],
+            "properties": {
+                "name": "[variables('functionAppName')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appPlanName'))]",
+                "reserved": false,
+                "scmSiteAlsoStopped": false,
+                "hostingEnvironmentProfile": null,
+                "clientAffinityEnabled": true,
+                "clientCertEnabled": false,
+                "hostNamesDisabled": false,
+                "containerSize": 1536,
+                "dailyMemoryTimeQuota": 0,
+                "cloningInfo": null,
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "FUNCTIONS_WORKER_RUNTIME",
+                            "value": "dotnet"
+                        },
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~2"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTSHARE",
+                            "value": "[concat(toLower(variables('functionAppName')), '9084')]"
+                        },
+                        {
+                            "name": "AzureWebJobsDashboard",
+                            "value": "[concat(variables('storageConnectionStringPrefix'), listKeys(variables('storageAccountid'),'2015-05-01-preview').key1, variables('azureGovStorageEndpointSuffix'))]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                            "value": "[concat(variables('storageConnectionStringPrefix'), listKeys(variables('storageAccountid'),'2015-05-01-preview').key1, variables('azureGovStorageEndpointSuffix'))]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "condition": "[not(parameters('govCloudDeployment'))]",
+            "apiVersion": "2015-05-01",
+            "name": "[concat(parameters('functionName'), '-public')]",
+            "type": "Microsoft.Insights/components",
+            "kind": "web",
+            "location": "[parameters('location')]",
+            "properties": {
+                "Application_Type": "web",
+                "Request_Source": "rest"
+            }
+        },
+        {
+            "comments": "This resource is for the Azure public cloud",
+            "condition": "[not(parameters('govCloudDeployment'))]",
+            "apiVersion": "2015-08-01",
+            "type": "Microsoft.Web/sites",
+            "name": "[concat(parameters('functionName'), '-public')]",
+            "location": "[parameters('location')]",
+            "kind": "functionapp",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', parameters('appPlanName'))]",
+                "[resourceId('Microsoft.Insights/components', concat(parameters('functionName'), '-public'))]"
+            ],
+            "properties": {
+                "name": "[concat(parameters('functionName'), '-public')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appPlanName'))]",
+                "reserved": false,
+                "scmSiteAlsoStopped": false,
+                "hostingEnvironmentProfile": null,
+                "clientAffinityEnabled": true,
+                "clientCertEnabled": false,
+                "hostNamesDisabled": false,
+                "containerSize": 1536,
+                "dailyMemoryTimeQuota": 0,
+                "cloningInfo": null,
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "FUNCTIONS_WORKER_RUNTIME",
+                            "value": "dotnet"
+                        },
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~2"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTSHARE",
+                            "value": "[concat(toLower(concat(parameters('functionName'), '-public')), '9084')]"
+
+                        },
+                        {
+                            "name": "AzureWebJobsDashboard",
+                            "value": "[concat(variables('storageConnectionStringPrefix'), listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                            "value": "[concat(variables('storageConnectionStringPrefix'), listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                            "value": "[reference(resourceId('microsoft.insights/components/', concat(parameters('functionName'), '-public')), '2015-05-01').InstrumentationKey]"
+                        }
+                    ]
+                }
+            }
+        }
+
+    ]
+}

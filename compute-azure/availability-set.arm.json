@@ -1,0 +1,39 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "availabilitySet": {
+            "type": "object",
+            "defaultValue":{
+                "name": "sample3-av",
+                "location": "east us 2",
+                "avType": "Aligned",
+                "faultDomainCount": 2,
+                "updateDomainCount": 5
+            },
+            "metadata": {
+                "description": "The full resource name of the Availability set resource."
+            }
+        },
+        "tags": {
+            "defaultValue": {},
+            "type": "object"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Compute/availabilitySets",
+            "name": "[parameters('availabilitySet').name]",
+            "apiVersion": "2019-07-01",
+            "location": "[parameters('availabilitySet').location]",
+            "tags": "[parameters('tags')]",
+            "properties": {
+                "platformFaultDomainCount": "[parameters('availabilitySet').faultDomainCount]",
+                "platformUpdateDomainCount": "[parameters('availabilitySet').updateDomainCount]"
+            },
+            "sku": {
+                "name": "[parameters('availabilitySet').avType]"
+            }
+        }
+    ]
+}

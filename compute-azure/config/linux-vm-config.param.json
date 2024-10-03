@@ -1,0 +1,21 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmResourceGroup": {
+            "value": "[profile.service.property.resourceGroup]"
+        },
+        "vmList": {
+            "value": "[profile.service.settingObject.vmConfig.vmList]"
+        },
+        "backup": {
+            "value": "[profile.service.settingObject.backup]"
+        },
+        "loggingWorkspace": {
+            "value": "[profile.service.settingObject.loggingWorkspace]"
+        },
+        "monitoringProperties": {
+            "value": "[profile.service.settingObject.monitoringProperties]"
+        }
+    }
+}

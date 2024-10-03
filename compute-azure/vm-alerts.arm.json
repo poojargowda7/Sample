@@ -1,0 +1,69 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "actionGroupName": {
+            "type": "object",
+            "defaultValue": {
+                "name": "sampleAG",
+                "resourceGroup": "sample1"
+            },
+            "metadata": {
+                "description": "Unique name (within the Resource Group) for the Action group."
+            }
+        },
+        "vmSettings": {
+            "defaultValue": {
+                "name": "startvm",
+                "vm_alert": "alerttest",
+                "resourceGroup": ""
+            },
+            "type": "object"
+        },
+        "actionType": {
+            "defaultValue": {
+                "action": "start"
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "actionGroupName": "[resourceId(parameters('actionGroupName').resourceGroup, 'microsoft.insights/actiongroups/', parameters('actionGroupName').name)]",
+        "alertProperties": "[resourceId(parameters('vmSettings').resourceGroup, 'Microsoft.Compute/virtualMachines/', parameters('vmSettings').name)]",
+        "actionType": "[concat('Microsoft.Compute/virtualMachines/',parameters('actionType').action,'/action')]"
+    },
+    "resources": [
+        {
+            "type": "microsoft.insights/activityLogAlerts",
+            "apiVersion": "2020-10-01",
+            "name": "[parameters('vmSettings').vm_alert]",
+            "location": "Global",
+            "properties": {
+                "scopes": [
+                    "[variables('alertProperties')]"
+                ],
+                "condition": {
+                    "allOf": [
+                        {
+                            "field": "category",
+                            "equals": "Administrative"
+                        },
+                        {
+                            "field": "operationName",
+                            "equals": "[variables('actionType')]"
+                        }
+                    ]
+                },
+                "actions": {
+                    "actionGroups": [
+                        {
+                            "actionGroupId": "[variables('actionGroupName')]"
+                        }
+                    ]
+                },
+                "enabled": true,
+                "description": "[concat('vm got' ,parameters('actionType').action)]"
+            }
+        }
+    ]
+}

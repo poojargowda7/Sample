@@ -1,0 +1,69 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"settings": {
+			"type": "object"
+		},
+		"schedule": {
+			"type": "object"
+		},
+		"configuration": {
+			"type": "object"
+		},
+		"baseTime": {
+			"type": "string",
+			"defaultValue": "[dateTimeAdd(utcNow('u'),'PT10M')]"
+		}
+	},
+	"variables": {
+		"startTime": "[dateTimeAdd(parameters('baseTime'),concat('PT',parameters('schedule').startsInHrs,'H'))]",
+		"expiryTime": "[dateTimeAdd(parameters('baseTime'),concat('P',parameters('schedule').validForDays,'D'))]",
+		"osTypeKey": "[if(equals('Windows',parameters('configuration').osType),'windows','linux')]",
+		"osTypeContent": "[if(equals('Windows',parameters('configuration').osType),createObject('includedUpdateClassifications',parameters('configuration').updateClassification,'excludedKbNumbers',json('[]'),'includedKbNumbers',json('[]'),'rebootSetting','IfRequired'),createObject('includedPackageClassifications',parameters('configuration').updateClassification,'rebootSetting','IfRequired'))]",
+		"tagsProvided1": "[and(contains(parameters('settings'), 'profileTagName'),contains(parameters('settings'), 'profileTagValue'))]",
+		"tagObject1": "[if(variables('tagsProvided1'),createObject(parameters('settings').profileTagName, createArray(parameters('settings').profileTagValue)),json('{}'))]",
+		"tagProvided2": "[or(contains(parameters('settings'), 'updateTagName'),contains(parameters('settings'), 'updateTagValue'))]",
+		"tagObject2":"[if(variables('tagProvided2'),createObject(parameters('settings').updateTagName, createArray(parameters('settings').updateTagValue)),json('{}'))]"	
+	},
+	"resources": [
+		{
+			"type": "Microsoft.Automation/automationAccounts/softwareUpdateConfigurations",
+			"apiVersion": "2019-06-01",
+			"name": "[concat(parameters('settings').automationSystemName,'/',parameters('settings').name)]",
+			"properties": {
+				"updateConfiguration": {
+					"operatingSystem": "[parameters('configuration').osType]",
+					"[variables('osTypeKey')]": "[variables('osTypeContent')]",
+					"targets": {
+						"azureQueries": [
+							{
+								"scope": "[if(contains(parameters('settings'),'vmResourceGroup'),createArray(concat(subscription().id,'/resourceGroups/',parameters('settings').vmResourceGroup)),createArray(subscription().id))]",
+								"tagSettings": {
+									"tags": "[union(variables('tagObject1'), variables('tagObject2'))]",
+									"filterOperator": "All"
+								},
+								"locations": []
+							}
+						]
+					},
+					"duration": "[concat('PT',parameters('configuration').downtimeInMins,'M')]",
+					"azureVirtualMachines": [],
+					"nonAzureComputerNames": []
+				},
+				"tasks": {},
+				"scheduleInfo": {
+					"startTime": "[variables('startTime')]",
+					"expiryTime": "[variables('expiryTime')]",
+					"interval": "[parameters('schedule').interval]",
+					"frequency": "[parameters('schedule').frequency]",
+					"timeZone": "[parameters('schedule').timezone]",
+					"advancedSchedule": {
+						"weekDays": "[parameters('schedule').daysOfWeek]",
+						"monthDays": "[parameters('schedule').daysOfMonth]"
+					}
+				}
+			}
+		}
+	]
+}

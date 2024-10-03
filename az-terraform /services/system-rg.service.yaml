@@ -1,0 +1,23 @@
+# SCHEMA Service
+service:
+  id: system-rg
+  name: sytem-rg
+  suffix: ""
+  description: Create landing zone system resource group
+  scope: sub
+  template: ""
+  parameters: ./templates/resource-group.param.json
+  properties:
+    _nameRg: parameter.name
+    moduleName: ${_nameRg}
+    _systemProfile: parameter.profile
+    resourceGroup: parameter.resourceGroup
+    location: parameter.location
+  defaultProperties:
+    _nameRg: system
+    _systemProfile: ${systemProfile}
+    resourceGroup: ${_systemProfile}-${_nameRg}-${systemRgSuffix}
+    location: ${region}
+  settings:
+  settingObjects:
+# EOF

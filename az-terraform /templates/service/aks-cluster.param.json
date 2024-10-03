@@ -1,0 +1,38 @@
+{
+    "module": {
+        "profile.service.property.moduleName": {
+            "source": "./az/modules/aks-cluster",
+            "prefix": "[profile.service.property._systemPrefix]",
+            "location": "[profile.service.property.location]",
+            "rg_name": "[profile.service.property.resourceGroup]",
+            "depends_on": "[profile.service.property.dependsOn]",
+            "aad_admin_group_id": "[profile.service.property._groupId]",
+            "aad_tenant_id": "[profile.account.Azure.tenantId]",
+            "aks_vmss_sku": "[profile.service.settingObject.clusterConfiguration.vmss_sku]",
+            "kubernetes_version": "[profile.service.settingObject.clusterConfiguration.version]",
+            "network_policy": "[profile.service.settingObject.clusterConfiguration.networkPolicy]",  
+            "azure_policy": "[profile.service.settingObject.clusterConfiguration.azurePolicy]",          
+            "vnet_CIDR": "[profile.service.settingObject.vnet.cidr]",
+            "subnet1-CIDR": "[profile.service.settingObject.subnet1.cidrs]",
+            "subnet2-CIDR": "[profile.service.settingObject.subnet2.cidrs]",
+            "subnet3-CIDR": "[profile.service.settingObject.subnet3.cidrs]",
+            "subnet4-CIDR": "[profile.service.settingObject.subnet4.cidrs]",
+            "tags": "[profile.service.settingObject.aks.tags]",
+            "app_node_count": "[profile.service.settingObject.aks.app_node_count]",
+            "app_max_count": "[profile.service.settingObject.aks.app_max_count]",
+            "app_min_count": "[profile.service.settingObject.aks.app_min_count]",
+            "app_max_pods": "[profile.service.settingObject.aks.app_max_pods]",
+            "app_availability_zones": "[profile.service.settingObject.aks.app_availability_zones]",
+            "data_node_count": "[profile.service.settingObject.aks.data_node_count]",
+            "data_max_count": "[profile.service.settingObject.aks.data_max_count]",
+            "data_min_count": "[profile.service.settingObject.aks.data_min_count]",
+            "data_max_pods": "[profile.service.settingObject.aks.data_max_pods]",
+            "data_availability_zones": "[profile.service.settingObject.aks.data_availability_zones]",
+            "web_node_count": "[profile.service.settingObject.aks.web_node_count]",
+            "web_max_count": "[profile.service.settingObject.aks.web_max_count]",
+            "web_min_count": "[profile.service.settingObject.aks.web_min_count]",
+            "web_max_pods": "[profile.service.settingObject.aks.web_max_pods]",
+            "web_availability_zones": "[profile.service.settingObject.aks.web_availability_zones]"
+        }
+    }
+}

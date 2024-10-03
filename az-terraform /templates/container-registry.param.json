@@ -1,0 +1,14 @@
+{
+    "module": {
+        "profile.service.property.moduleName": {
+            "source": "./az/modules/acr",
+            "depends_on": "{profile.service.property.dependsOn}",
+
+            "prefix": "[profile.service.property._systemPrefix]",
+            "rg_name": "[profile.service.property.resourceGroup]",
+            "rg_location": "[profile.service.property.location]",
+            "tags": "[profile.tags]"
+
+        }
+    }
+}

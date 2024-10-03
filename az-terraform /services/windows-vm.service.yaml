@@ -1,0 +1,20 @@
+#SCHEMA Service
+service:
+  id: windows-vm
+  name: windows-vm
+  suffix: ""
+  description: Windows VM creation.
+  scope: sub
+  template: ""
+  parameters: ./templates/service/windows-vm.param.json
+  properties:
+    instanceName: parameter.name
+    moduleName: ${instanceName}
+  defaultProperties:
+  settings:
+  settingObjects:
+    winVMSetting: {parameter.winVMSetting}
+  defaultObjects:
+    win10Setting:    
+      name: test-win10
+#EOF

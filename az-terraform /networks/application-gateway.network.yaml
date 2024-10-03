@@ -1,0 +1,37 @@
+# Schema Network
+network:
+  id: application-gateway
+  name: application-gateway
+  suffix: ""
+  description: Applicaton Gateway that enables Traffic Management and Load balancing
+  notes: Applicaton Gateway that enables Traffic Management and Load balancing
+  scope: group
+  template: ""
+  parameters: ./templates/application-gateway.param.json
+  properties:
+    _stub: ""
+    _instanceName: parameter.name
+    moduleName: ${_instanceName}-gateway
+    _systemPrefix: parameter.prefix
+    moduleType: module
+    #moduleNetwork: ${_instanceName}-network
+    moduleNetwork: ${systemNetwork}
+    dot: "."
+    prefix: "$"
+    prefix2: "{"
+    suffix: "}"
+    location: parameter.location
+    resourceGroup: ${systemRg}
+    _vnetName: ${prefix}${prefix2}${moduleType}${dot}${moduleNetwork}${dot}azurerm_vnet_name${suffix}
+    _subnetId: ${prefix}${prefix2}${moduleType}${dot}${moduleNetwork}${dot}azurerm_subnet_gateway_id${suffix}
+    dependsOn: parameter.dependsOn
+  defaultProperties:
+    _instanceName: aks
+    _systemPrefix: ${systemOrganization}${systemEnvironment}
+    location: ${region}
+    dependsOn: ""
+  settings:
+  settingLists:
+  settingObjects:
+  defaultObjects:
+# EOF

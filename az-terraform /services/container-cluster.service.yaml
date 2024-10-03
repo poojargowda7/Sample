@@ -1,0 +1,100 @@
+# schema Service
+service:
+  id: container-cluster
+  name: container-cluster
+  suffix: ""
+  description: Configure AKS cluster
+  scope: group
+  template: ""
+  parameters: ./templates/container-cluster.param.json
+  properties:
+    _instanceName: parameter.name
+    location: parameter.location
+    _systemPrefix: parameter.prefix
+    _groupId: parameter.groupId
+    _stub: ""
+    _dot: "."
+    moduleName: ${_instanceName}
+    gatewayName: ${_instanceName}_gw
+    acrName: ${systemOrganization}${systemEnvironment}acr
+    subscriptionType: "/subscriptions/"
+    _subscriptionId: profile.account.Azure.subscriptionId
+    _tenantId: profile.account.Azure.tenantId
+    rgType: "/resourcegroups/"
+    workspaceRgName: ${sharedSystemRg}
+    workspaceType: ${_stub}/providers/microsoft${_dot}operationalinsights/workspaces/
+    workspaceName: ${sharedWorkspace}
+    workspaceId: ${subscriptionType}${_subscriptionId}${rgType}${workspaceRgName}${workspaceType}${workspaceName}
+    moduleType: module
+    #moduleNetwork: ${_instanceName}-network
+    moduleNetwork: ${systemNetwork}
+    dot: "."
+    prefix: "$"
+    prefix2: "{"
+    suffix: "}"
+    resourceGroup: ${systemRg}
+    _vnetName: ${moduleType}${dot}${moduleNetwork}${dot}azurerm_vnet_name
+    _subnetAppId: ${prefix}${prefix2}${moduleType}${dot}${moduleNetwork}${dot}azurerm_subnet_app_id${suffix}
+    _subnetDataId: ${prefix}${prefix2}${moduleType}${dot}${moduleNetwork}${dot}azurerm_subnet_data_id${suffix}
+    _subnetWebId: ${prefix}${prefix2}${moduleType}${dot}${moduleNetwork}${dot}azurerm_subnet_web_id${suffix}
+    _cluster_id: ${prefix}${prefix2}${moduleType}${dot}${moduleName}${dot}aks_cluster_id${suffix}
+    _azurerm_log_analytics_id: ${prefix}${prefix2}${moduleType}${dot}${systemWorkspace}${dot}azurerm_log_analytics_id${suffix}
+    dependsOn: parameter.dependsOn
+  defaultProperties:
+    serviceName: ${_instanceName}
+    _systemPrefix: ${systemOrganization}${systemEnvironment}
+    location: ${region}
+    # az ad group show --group '*CloudForte Technology Architects' --query [objectId] --output tsv
+    _groupId: "31ed1dd3-4872-4adc-b0f8-317dd10e9e1c"
+    dependsOn: ""
+  settings:
+    #vpc: parameter.vpc
+    #source: parameter.source
+    #target: parameter.target
+  settingLists:
+    #x
+    #   - abc
+  defaultLists:
+    hosts:
+      - ${_instanceName}.example
+  settingObjects:
+    wafConfiguration: { parameter.configuration }
+    workspace: { parameter.workspace }
+    clusterConfiguration: { parameter.cluster }
+    nodeApp: { parameter.app }
+    nodeData: { parameter.data }
+    nodeWeb: { parameter.web }
+  defaultObjects:
+    nodeApp:
+      nodes: 1
+      min: 1
+      max: 2
+      pods: 75
+      zones: ["1", "2", "3"]
+    nodeData:
+      nodes: 1
+      min: 1
+      max: 2
+      pods: 75
+      zones: ["1", "2", "3"]
+    nodeWeb:
+      nodes: 1
+      min: 1
+      max: 2
+      pods: 75
+      zones: ["1", "2", "3"]
+    workspace:
+      name: ${sharedWorkspace}
+      resourceGroup: ${sharedSystemRg}
+      location: ${region}
+    wafConfiguration:
+      firewall_mode: "Detection"
+      rule_set_type: "OWASP"
+      rule_set_version: "3.2"
+      file_upload_limit_mb: 300
+      max_request_body_size_kb: 100
+    clusterConfiguration:
+      version: "1.22.4"
+      vmss_sku: "Standard_DS2_v2"
+      networkPolicy: 0
+# EOF

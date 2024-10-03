@@ -1,0 +1,14 @@
+{
+  "bucket":{
+    "type": "string",
+    "description": "Name for the bucket",
+    "value": "profile.service.settingObject.state-setting.bucket",
+    "default": ""
+  },
+  "prefix":{
+    "type": "string",
+    "description": "Bucket prefix",
+    "value": "profile.service.settingObject.state-setting.prefix",
+    "default": "dev"
+  }
+}

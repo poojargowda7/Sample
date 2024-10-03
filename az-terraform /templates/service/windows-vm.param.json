@@ -1,0 +1,26 @@
+{
+    "module": {
+        "profile.service.property.moduleName": {
+            "source": "./az/modules/windows_vm",
+            "prefix": "{profile.service.settingObject.winVMSetting.prefix}",
+			"tags": "{profile.service.settingObject.winVMSetting.tags}",
+            "location": "{profile.service.settingObject.winVMSetting.location}",
+            "vnet_address_range": "{profile.service.settingObject.winVMSetting.vnet_address_range}",
+            "subnet_address_range": "{profile.service.settingObject.winVMSetting.subnet_address_range}",
+            "allocation_method": "{profile.service.settingObject.winVMSetting.allocation_method}",
+            "virtual_machine_size": "{profile.service.settingObject.winVMSetting.virtual_machine_size}",
+            "computer_name": "{profile.service.settingObject.winVMSetting.computer_name}",
+            "admin_username": "{profile.service.settingObject.winVMSetting.admin_username}",
+            "admin_password": "{profile.service.settingObject.winVMSetting.admin_password}",
+            "os_disk_caching": "{profile.service.settingObject.winVMSetting.os_disk_caching}",
+            "os_disk_storage_account_type": "{profile.service.settingObject.winVMSetting.os_disk_storage_account_type}",
+            "os_disk_size_gb": "{profile.service.settingObject.winVMSetting.os_disk_size_gb}",
+            "publisher": "{profile.service.settingObject.winVMSetting.publisher}",
+            "offer": "{profile.service.settingObject.winVMSetting.offer}",
+            "sku": "{profile.service.settingObject.winVMSetting.sku}",
+            "vm_image_version": "{profile.service.settingObject.winVMSetting.vm_image_version}",
+            "managed": "{profile.service.settingObject.winVMSetting.managed}",
+            "platform_fault_domain_count": "{profile.service.settingObject.winVMSetting.platform_fault_domain_count}"
+        }
+    }
+}

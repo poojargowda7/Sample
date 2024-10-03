@@ -1,0 +1,14 @@
+{
+    "module": {
+        "profile.network.property.moduleName": {
+            "source": "./az/modules/application-gateway",
+            "depends_on": "{profile.network.property.dependsOn}",
+            "prefix": "[profile.network.property._systemPrefix]",
+            "rg_name": "[profile.network.property.resourceGroup]",
+            "rg_location": "[profile.network.property.location]",
+            "azurerm_vnet_name": "[profile.network.property._vnetName]",
+            "azurerm_subnet_gateway_id": "[profile.network.property._subnetId]",
+            "tags": "[profile.tags]"
+        }
+    }
+}

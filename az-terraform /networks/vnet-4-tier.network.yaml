@@ -1,0 +1,38 @@
+# Schema Network
+network:
+  id: vnet-4-tier
+  name: vnet-4-tier
+  suffix: ""
+  description: Network peered as spoke network to gateway hub network
+  notes: ExpressRoute circuts and VPN route through the gateway network
+  scope: group
+  template: ""
+  parameters: ./templates/aks-network.param.json
+  properties:
+    _stub: ""
+    _instanceName: parameter.name
+    moduleName: ${_instanceName}  # -network
+    #moduleName: ${_stub}vnet-4-tier-${_instanceName}
+    _systemPrefix: parameter.prefix
+    location: parameter.location
+    resourceGroup: ${systemRg}
+    dependsOn: parameter.dependsOn
+  defaultProperties:
+    _instanceName: aks
+    _systemPrefix: ${systemOrganization}${systemEnvironment}
+    location: ${region}
+    dependsOn: ""
+  settings:
+  settingLists:
+  settingObjects:
+    vnet: '[parameter.vnet]'
+    subnet1: '[parameter.subnet1]'
+    subnet2: '[parameter.subnet2]'
+    subnet3: '[parameter.subnet3]'
+    subnet4: '[parameter.subnet4]'
+    loggingWorkspace: '[parameter.logging]'
+  defaultObjects:
+    loggingWorkspace:
+      name: ""
+      resourceGroup: ${systemRg}
+# EOF

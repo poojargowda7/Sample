@@ -1,0 +1,29 @@
+# schema Service
+service:
+  id: container-registry
+  name: container-registry
+  suffix: ""
+  description: container registery (acr)
+  scope: group
+  template: ""
+  parameters: ./templates/container-registry.param.json
+  properties:
+    _instanceName: parameter.name
+    moduleName: ${_instanceName}_acr
+    _systemPrefix: parameter.prefix
+    acrName: parameter.acr
+    _subscriptionId: profile.account.Azure.subscriptionId
+    location: parameter.location
+    dependsOn: parameter.dependsOn
+  defaultProperties:
+    serviceName: ${instanceName}
+    _systemPrefix: ${systemOrganization}${systemEnvironment}
+    acrName: ${_systemPrefix}acr
+    location: ${region}
+    dependsOn: ""
+  settings:
+  settingLists:
+  defaultLists:
+  settingObjects:
+  defaultObjects:
+# EOF

@@ -1,0 +1,80 @@
+# schema Service
+service:
+  id: aks-cluster
+  name: aks-cluster
+  suffix: ""
+  description: Configure AKS cluster
+  scope: group
+  template: ""
+  parameters: ./templates/service/aks-cluster.param.json
+  properties:
+    _instanceName: parameter.name
+    _systemPrefix: parameter.prefix
+    resourceGroup: ${systemRg}
+    location: parameter.location    
+    _groupId: parameter.groupId
+#    _systemProfile: parameter.profile
+    moduleName: ${_instanceName}
+    dependsOn: parameter.dependsOn
+    
+    
+  defaultProperties:
+    serviceName: ${_instanceName}
+    _systemPrefix: ${systemOrganization}${systemEnvironment}
+    location: ${region}
+    # az ad group show --group '*CloudForte Technology Architects' --query [objectId] --output tsv
+    _groupId: "31ed1dd3-4872-4adc-b0f8-317dd10e9e1c"
+    dependsOn: parameter.dependsOn
+  settings:
+    #vpc: parameter.vpc
+    #source: parameter.source
+    #target: parameter.target
+  settingLists:
+    dependentTerrformModule:
+      - ./az/modules/acr
+      - ./az/modules/aks-network
+      - ./az/modules/application-gateway
+      - ./az/modules/azure-log-analytics
+      - ./az/modules/aks
+    #x
+    #   - abc
+  defaultLists:
+    hosts:
+      - ${_instanceName}.example
+  settingObjects:
+    vnet: '[parameter.vnet]'
+    subnet1: '[parameter.subnet1]'
+    subnet2: '[parameter.subnet2]'
+    subnet3: '[parameter.subnet3]'
+    subnet4: '[parameter.subnet4]'
+    clusterConfiguration: { parameter.cluster }
+    aks: { parameter.aksConfig }
+  defaultObjects:
+    nodeApp:
+      nodes: 1
+      min: 1
+      max: 2
+      pods: 75
+      zones: ["1", "2", "3"]
+    nodeData:
+      nodes: 1
+      min: 1
+      max: 2
+      pods: 75
+      zones: ["1", "2", "3"]
+    nodeWeb:
+      nodes: 1
+      min: 1
+      max: 2
+      pods: 75
+      zones: ["1", "2", "3"]
+    workspace:
+      name: ${sharedWorkspace}
+      resourceGroup: ${sharedSystemRg}
+      location: ${region}
+    clusterConfiguration:
+      version: "1.21.1"
+      vmss_sku: "Standard_DS2_v2"
+      networkPolicy: 0 # '0' for Azure Network Policy, '1' for Calico Network Policy
+      azurePolicy: 1 # '0' for Azure Policy, '1' for OPA Gatekeeper Policy
+# EOF

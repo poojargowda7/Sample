@@ -1,0 +1,14 @@
+# SCHEMA Service
+service:
+  id: azure-rm
+  name: azure-rm
+  suffix: ""
+  description: ARM deployment
+  scope: group
+  template: ""
+  parameters: ./templates/azure-rm.param.json
+  properties:
+  defaultProperties:
+  settings:
+  settingObjects:
+# EOF

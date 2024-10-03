@@ -1,0 +1,37 @@
+# schema Service
+service:
+  id: system-monitor
+  name: system-monitor
+  suffix: ""
+  description: Configure log analyitics, Azure Monitor and Automation
+  scope: group
+  template: ""
+  parameters: ./templates/azure-log-analytics.param.json
+  properties:
+    _instanceName: parameter.name
+    moduleName: ${_instanceName}
+    _systemPrefix: parameter.prefix
+    resourceGroup: ${systemRg}
+    logRetentionDays: parameter.logRetention
+    location: parameter.location
+    dependsOn: parameter.dependsOn
+  defaultProperties:
+    _systemPrefix: ${systemOrganization}${systemEnvironment}
+    location: ${region}
+    logRetentionDays: "365"
+    dependsOn: ""
+  settings:
+  settingLists:
+  defaultLists:
+  settingObjects:
+    workspaceSettings: {parameter.workspace}
+    logOptions: {parameter.options}
+  defaultObjects:
+    workspaceSettings:
+      name: ${systemWorkspace}
+      resourceGroup: ${systemRg}
+      location: ${region}
+    logOptions:
+      serviceTier: PerNode
+      dataRetention: ${logRetentionDays}
+# EOF

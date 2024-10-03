@@ -1,0 +1,22 @@
+{
+    "module": {
+        "profile.service.property.moduleName": {
+            "source": "./az/modules/containers",
+
+            "prefix": "[profile.property.systemProfile]",
+            "location": "[profile.property.region]",
+            "aad_tenant_id": "[profile.account.Azure.tenantId]",
+            "app_gateway_name": "[profile.service.property.gatewayName]",
+            "app_gateway_sku": "WAF_v2",
+            "acr_name": "[profile.service.property.acrName]",
+            "aad_admin_group_id": "[profile.service.property.groupId]",
+            "log_analytics_workspace_id": "[profile.service.property.workspaceId]",
+            "waf_enabled": true,
+            "waf_configuration": "[profile.service.settingObject.wafConfiguration]",
+            "aks_vmss_sku": "[profile.service.settingObject.clusterConfiguration.vmss_sku]",
+            "kubernetes_version": "[profile.service.settingObject.clusterConfiguration.version]",
+            "tags": "[profile.tags]"
+
+        }
+    }
+}

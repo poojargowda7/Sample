@@ -1,0 +1,17 @@
+{
+    "module": {
+        "profile.network.property.moduleName": {
+            "source": "./az/modules/aks-network",
+            "depends_on": "{profile.network.property.dependsOn}",
+            "prefix": "[profile.network.property._systemPrefix]",
+            "rg_name": "[profile.network.property.resourceGroup]",
+            "rg_location": "[profile.network.property.location]",
+            "vnet_CIDR": "[profile.network.settingObject.vnet.cidr]",
+            "subnet1-CIDR": "[profile.network.settingObject.subnet1.cidrs]",
+            "subnet2-CIDR": "[profile.network.settingObject.subnet2.cidrs]",
+            "subnet3-CIDR": "[profile.network.settingObject.subnet3.cidrs]",
+            "subnet4-CIDR": "[profile.network.settingObject.subnet4.cidrs]",
+            "tags": "[profile.tags]"
+        }
+    }
+}

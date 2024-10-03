@@ -1,0 +1,12 @@
+{
+    "module": {
+        "profile.service.property.moduleName": {
+            "source": "./az/modules/resource-group",
+            "prefix": "[profile.service.property._systemProfile]",
+            "rg_name": "[profile.service.property.resourceGroup]",
+            "location": "[profile.property.region]",
+            "tags": "[profile.tags]"
+
+        }
+    }
+}

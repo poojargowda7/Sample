@@ -1,0 +1,22 @@
+# SCHEMA ServiceDocument
+service:
+  id: system-condition
+  name: system-condition
+  suffix: "a"
+  description: Landing Zone optional profile condition
+  scope: group
+  template: ""
+  parameters: ""
+  properties:
+    artifactName: parameter.name
+    systemCondition: parameter.condition
+    service_command: system_condition
+  settings:
+  settingLists:
+    service_parameters:
+      - ${systemCondition}
+      - ${artifactName}
+  defaultLists:
+  settingObjects:
+  defaultObjects:
+# EOF

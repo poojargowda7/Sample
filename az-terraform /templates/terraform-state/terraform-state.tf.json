@@ -1,0 +1,16 @@
+{
+    "terraform": [
+      {
+        "backend": [
+          {
+            "gcs": [
+              {
+                "bucket": "accl-bucket",
+                "prefix": "dev"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }

@@ -1,0 +1,28 @@
+{
+    "module": {
+        "profile.service.property.moduleName": {
+            "source": "./az/modules/morpheus-core",
+            "prefix": "{profile.service.settingObject.morpheusCoreSetting.prefix}",
+            "existing_rg_name": "{profile.service.property.existing_rg_name}",
+            "existing_vnet_name": "{profile.service.property.existing_vnet_name}",
+            "managed": "{profile.service.settingObject.morpheusCoreSetting.managed}",
+            "platform_fault_domain_count": "{profile.service.settingObject.morpheusCoreSetting.platform_fault_domain_count}",
+            "allocation_methods": "{profile.service.settingObject.morpheusCoreSetting.allocation_methods}",
+            "storage_account_name": "{profile.service.settingObject.morpheusCoreSetting.storage_account_name}",
+            "account_tier": "{profile.service.settingObject.morpheusCoreSetting.account_tier}",
+            "account_replication_type": "{profile.service.settingObject.morpheusCoreSetting.account_replication_type}",
+            "virtual_machine_size": "{profile.service.settingObject.morpheusCoreSetting.virtual_machine_size}",
+            "computer_name": "{profile.service.settingObject.morpheusCoreSetting.computer_name}",
+            "admin_username": "{profile.service.settingObject.morpheusCoreSetting.admin_username}",
+            "admin_password": "{profile.service.settingObject.morpheusCoreSetting.admin_password}",
+            "os_disk_caching": "{profile.service.settingObject.morpheusCoreSetting.os_disk_caching}",
+            "os_disk_storage_account_type": "{profile.service.settingObject.morpheusCoreSetting.os_disk_storage_account_type}",
+            "os_disk_size_gb": "{profile.service.settingObject.morpheusCoreSetting.os_disk_size_gb}",
+            "publisher": "{profile.service.settingObject.morpheusCoreSetting.publisher}",
+            "offer": "{profile.service.settingObject.morpheusCoreSetting.offer}",
+            "sku": "{profile.service.settingObject.morpheusCoreSetting.sku}",
+            "vm_image_version": "{profile.service.settingObject.morpheusCoreSetting.vm_image_version}"
+     
+        }
+    }
+}

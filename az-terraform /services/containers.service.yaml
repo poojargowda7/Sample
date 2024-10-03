@@ -1,0 +1,57 @@
+# schema Service
+service:
+  id: containers
+  name: containers
+  suffix: ""
+  description: Configure AKS
+  scope: group
+  template: ""
+  parameters: ./templates/containers.param.json
+  properties:
+    instanceName: parameter.name
+    stub: ""
+    dot: "_"
+    moduleName: ${instanceName}_aks
+    gatewayName: ${instanceName}_gw
+    acrName: ${systemOrganization}${systemEnvironment}acr
+    groupId: parameter.groupId
+    subscriptionType: "/subscriptions/"
+    subscriptionId: profile.account.Azure.subscriptionId
+    rgType: "/resourcegroups/"
+    workspaceRgName: ${sharedSystemRg}
+    workspaceType: /providers/microsoft.operationalinsights/workspaces/
+    workspaceName: ${sharedWorkspace}
+    workspaceId: ${subscriptionType}${subscriptionId}${rgType}${workspaceRgName}${workspaceType}${workspaceName}
+  defaultProperties:
+    serviceName: ${instanceName}
+    # az ad group show --group '*CloudForte Technology Architects' --query [objectId] --output tsv
+    groupId: "31ed1dd3-4872-4adc-b0f8-317dd10e9e1c"
+  settings:
+    #vpc: parameter.vpc
+    #source: parameter.source
+    #target: parameter.target
+  settingLists:
+    #x
+    #   - abc
+  defaultLists:
+    hosts:
+      - ${instanceName}.example
+  settingObjects:
+    wafConfiguration: parameter.configuration
+    workspace: parameter.workspace
+    clusterConfiguration: parameter.cluster
+  defaultObjects:
+    workspace:
+      name: ${sharedWorkspace}
+      resourceGroup: ${sharedSystemRg}
+      location: ${region}
+    wafConfiguration:
+      firewall_mode: "Detection"
+      rule_set_type: "OWASP"
+      rule_set_version: "3.2"
+      file_upload_limit_mb: 300
+      max_request_body_size_kb: 100
+    clusterConfiguration:
+      version: "1.21.1"
+      vmss_sku: "Standard_DS2_v2"
+# EOF
